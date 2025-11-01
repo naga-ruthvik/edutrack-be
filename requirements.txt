@@ -5,3 +5,4 @@ djoser
 djangorestframework-simplejwt
 pillow
 python-dotenv
+django-cors-headers
