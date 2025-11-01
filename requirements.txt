@@ -1,0 +1,7 @@
+python==3.12.2
+django==5.2.7
+djangorestframework==3.16.1
+djoser
+djangorestframework-simplejwt
+pillow
+python-dotenv
