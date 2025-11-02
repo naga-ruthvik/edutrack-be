@@ -61,12 +61,7 @@ class InstitutionAdminCreateSerializer(BaseUserCreateSerializer):
         user = super().create(validated_data) 
 
         # 2. Create the new Institution using the data we saved on 'self'
-        try:
-            institution = Institution.objects.create(**self.institution_data)
-        except Exception as e:
-            user.delete() # Rollback
-            raise serializers.ValidationError(f"Could not create institution: {e}")
-
+        institution = Institution.objects.create(**self.institution_data)
         # 3. Create the Admin's Profile using data from 'self'
         Profile.objects.create(
             user=user,
