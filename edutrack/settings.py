@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'djoser',
+    'drf_spectacular',
 
     # project apps
     'users',
@@ -161,6 +162,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # settings.py
@@ -195,3 +198,7 @@ EMAIL_USE_TLS=True
 EMAIL_PORT=587
 EMAIL_HOST_USER=os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD=os.environ.get("EMAIL_HOST_PASSWORD")
+
+SPECTACULAR_SETTINGS = {
+    'DISABLE_ERRORS_AND_WARNINGS': True
+}
