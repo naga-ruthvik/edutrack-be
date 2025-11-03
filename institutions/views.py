@@ -1,6 +1,10 @@
-from django.shortcuts import render
+from rest_framework.generics import ListAPIView
+from .models import Institution
+from users.permissions import IsInstitutuionAdmin, IsFaculty, IsHod, IsStudent
 
-# Create your views here.
-from django.contrib.auth import logout
-logout()
-import djoser
+
+class AdminView(ListAPIView):
+    model=Institution
+    permission_classes=[IsFaculty]
+    def get_queryset(self):
+        return super().get_queryset()
