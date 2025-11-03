@@ -6,3 +6,4 @@ pillow
 python-dotenv
 django-cors-headers
 drf-spectacular
+psycopg2
