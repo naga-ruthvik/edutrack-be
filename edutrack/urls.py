@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, re_path, include
 from djoser.views import UserViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,4 +28,10 @@ urlpatterns = [
         UserViewSet.as_view({'get': 'activation'}),
         name='activation'
     ),
+    path('schema/', SpectacularAPIView.as_view(), name='schema'),  # raw OpenAPI schema
+    path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
+    # app urls
+    path('',include('users.urls'))
 ]
