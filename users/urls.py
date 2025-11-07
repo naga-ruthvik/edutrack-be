@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import InstitutionStudentsListAPIView, InstitutionRegisterView
+from .views import InstitutionRegisterView
 
 urlpatterns=[
     # path('institution-students', InstitutionStudentsListAPIView.as_view(), name="list_students"),

@@ -7,7 +7,6 @@ from institutions.serializers import InstitutionCreateSerializer
 from .models import User, Profile
 
 class InstitutionAdminCreateSerializer(BaseUserCreateSerializer):
-    
     first_name = serializers.CharField(write_only=True, required=True)
     last_name = serializers.CharField(write_only=True, required=True)
     institution = InstitutionCreateSerializer(write_only=True)
@@ -62,8 +61,3 @@ class InstitutionAdminCreateSerializer(BaseUserCreateSerializer):
             role=Profile.Role.ADMIN
         )
         return user
-
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Profile
-        fields=('name')
