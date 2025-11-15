@@ -11,4 +11,4 @@ class InstitutionCreateSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model=Profile
-        fields=('first_name','last_name')
+        fields=('first_name','last_name','role')

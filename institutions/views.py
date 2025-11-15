@@ -15,3 +15,8 @@ class InstitutionStudentsAPIView(InstitutionFilterMixin, ListAPIView):
     queryset=Profile.objects.all()
     permission_classes=[IsInstitutuionAdmin]
     serializer_class=ProfileSerializer
+
+    # filter only students
+    def get_queryset(self):
+        queryset=Profile.objects.filter(role='STUDENT')
+        return queryset

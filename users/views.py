@@ -6,6 +6,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from .serializers import InstitutionAdminCreateSerializer
+from djoser.views import UserViewSet
+from djoser.conf import settings as djoser_settings
+from django.conf import settings
+from djoser.email import ActivationEmail
 
 class InstitutionRegisterView(APIView):
     """
@@ -26,9 +30,16 @@ class InstitutionRegisterView(APIView):
             # Let's adjust the serializer logic slightly
             # In InstitutionAdminCreateSerializer, rename 'perform_create' to 'save'
             # (I'll show this in Step 3)
-            
+            print(request)
             user = serializer.save()
             
+            if settings.DJOSER.get('SEND_ACTIVATION_EMAIL', False):
+                context={"user":user}
+                to=[user.email]
+                ActivationEmail(self.request, context).send(to)
+                
+
+
             # We can return a success message or even auto-login tokens
             # For now, a simple success message is good.
             return Response(
