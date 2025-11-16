@@ -1,6 +1,7 @@
 from rest_framework.permissions import BasePermission
 
 class IsInstitutuionAdmin(BasePermission):
+    message="you need to login/ you are not admin to view"
     def has_permission(self, request, view):
         return getattr(request.user.profile, 'role', None) == 'ADMIN'
 
