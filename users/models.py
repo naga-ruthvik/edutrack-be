@@ -28,6 +28,10 @@ class Profile(models.Model):
     )
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
+    identifier=models.CharField(max_length=50) # roll number - student, faculty_id - mentor a unique id which is given in a college
+
+    class Meta:
+        unique_together=('identifier', 'institution','department')
 
     def __str__(self):
         return self.user.email
