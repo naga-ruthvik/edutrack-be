@@ -14,7 +14,8 @@ from utils.generate_credentials import generate_usename_password
 
 from .models import Department, Institution
 from .serializers import ProfileSerializer, ProfileUploadSerializer
-
+from django.http import HttpResponse
+from django.core.files.base import ContentFile
 # class AdminView(ListAPIView):
 #     model=Institution
 #     permission_classes=[IsFaculty]
@@ -24,14 +25,14 @@ from .serializers import ProfileSerializer, ProfileUploadSerializer
 class InstitutionStudentsAPIView(InstitutionFilterMixin, ListAPIView):
     """listing all students present in a institute"""
     model=Profile
-    queryset=Profile.objects.all()
+    queryset = Profile.objects.filter(role='STUDENT')
     permission_classes=[IsAuthenticated,IsInstitutuionAdmin]
     serializer_class=ProfileSerializer
 
     # filter only students
-    def get_queryset(self):
-        queryset=Profile.objects.filter(role='STUDENT')
-        return queryset
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     return queryset
     
 class CreateProfilesView(GenericAPIView):
     """Creates students and profiles in bulk from an Excel file."""
@@ -53,6 +54,9 @@ class CreateProfilesView(GenericAPIView):
         # (Assuming generate_usename_password and model imports are correct)
         try:
             df, updated_file_obj = generate_usename_password(input_file,college_code)
+            file_for_response = ContentFile(updated_file_obj.getvalue(), name="credentials.xlsx")
+
+            print("--------------DF-------------", df.columns)
         except Exception as e:
             return Response({"error": f"Error processing file: {e}"}, status=400)
 
@@ -78,6 +82,7 @@ class CreateProfilesView(GenericAPIView):
                     username = row.get("Username")
                     password = row.get("Password")
                     dept_name = row.get("Department")
+                    print("username, password, department",username, password, dept_name)
 
                     if not username or not password or not dept_name:
                          raise ValueError("Missing essential data (Username, Password, or Department) in row.")
@@ -86,35 +91,37 @@ class CreateProfilesView(GenericAPIView):
                     if not department_id:
                         raise ValueError(f"Department '{dept_name}' not found for your institution.")
 
+                    print("-----------------creating user---------------")
                     # Create User (handles potential IntegrityError for duplicate username/email)
                     user = User.objects.create_user(
                         username=username,
-                        email=row.get("Email"),
-                        first_name=row.get("First Name"),
-                        last_name=row.get("last Name"),
+                        email=row.get("Email",""),
+                        first_name=row.get("First Name",""),
+                        last_name=row.get("Last Name",""),
                         is_active=True,
                     )
                     user.set_password(password) 
                     user.save() 
-
+                    print("-----------created user-----------",user)
                     # Create Profile
+                    print("-----------created profile-----------")
                     Profile.objects.create(
                         user=user,
-                        first_name=row.get("First Name"),
-                        last_name=row.get("last Name"),
-                        rollnumber=row.get("Roll Number"),
+                        first_name=row.get("First Name",""),
+                        last_name=row.get("Last Name",""),
+                        identifier=row.get("Identifier",""),
                         department_id=department_id,
-                        institution_id=institution_id,
+                        institution=institution_id,
                         role=role
                     )
                     
-                except IntegrityError:
+                except IntegrityError as e:
                     # Catch database errors like duplicate username/email
-                    error_rows.append(f"Row {index + 2}: Duplicate User (Username or Email already exists).")
+                    error_rows.append(f"Row {index + 2}: Duplicate User (Username or Email already exists).{e}")
                     
                 except ValueError as ve:
                     # Catch custom validation errors (e.g., department not found)
-                    error_rows.append(f"Row {index + 2}: Custom Error - {ve}")
+                    error_rows.append(f"Row {index + 2}: Custom Error - {ve}",)
                     
                 except Exception as e:
                     # Catch any other unexpected error
@@ -129,8 +136,12 @@ class CreateProfilesView(GenericAPIView):
         if not updated_file_obj:
             return Response({"error": "Successfully created profiles, but output file could not be generated."}, status=500)
 
-        return FileResponse(
-            updated_file_obj,
-            as_attachment=True,
-            filename="credentials.xlsx"
+        response = HttpResponse(
+            updated_file_obj.getvalue().decode(),
+            content_type="text/csv"
         )
+        response['Content-Disposition'] = 'attachment; filename="credentials.csv"'
+        response['X-Message'] = 'File generated successfully'
+        response['X-Status'] = 'success'
+
+        return response

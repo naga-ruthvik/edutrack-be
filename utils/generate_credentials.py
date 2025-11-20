@@ -10,7 +10,7 @@ from datetime import datetime
 CONFIG = {
     "input_file": "students.csv",
     "output_file": "student_credentials.csv",
-    "roll_column": "Roll Number",
+    "identifier": "Identifier",
     "name_column": "Full Name",
     "dept_column": "Department",
     "COLLEGE_CODE": "88",  # Set your college code here
@@ -151,8 +151,9 @@ def generate_usename_password(input_file, college_code):
     CONFIG = {
     "input_file": input_file,
     "output_file": "student_credentials.csv",
-    "roll_column": "Roll Number",
-    "name_column": "Full Name",
+    "identifier": "Identifier",
+    "first_name":"First Name",
+    "last_name":"Last Name",
     "dept_column": "Department",
     "COLLEGE_CODE": college_code,  # Set your college code here
     }
@@ -164,7 +165,7 @@ def generate_usename_password(input_file, college_code):
         return
 
     # 2. Validate Columns
-    required_cols = [CONFIG["name_column"], CONFIG["roll_column"], CONFIG["dept_column"]]
+    required_cols = [CONFIG["first_name"], CONFIG["identifier"], CONFIG["dept_column"], CONFIG["first_name"]]
     missing_cols = [col for col in required_cols if col not in df.columns]
     
     if missing_cols:
@@ -177,7 +178,7 @@ def generate_usename_password(input_file, college_code):
     base_usernames = df.apply(
         create_college_username,
         axis=1,
-        args=(CONFIG["roll_column"], CONFIG["dept_column"], CONFIG["COLLEGE_CODE"])
+        args=(CONFIG["identifier"], CONFIG["dept_column"], CONFIG["COLLEGE_CODE"])
     )
 
     # 4. Handle Duplicates
@@ -190,9 +191,10 @@ def generate_usename_password(input_file, college_code):
     df['Password'] = df.apply(
         create_custom_password,
         axis=1,
-        args=(CONFIG["name_column"],)
+        args=(CONFIG["first_name"],)
     )
 
     # 6. Save Data
-    file_obj=save_data(df, CONFIG["output_file"])
+    file_obj=save_data(df, "credentials.csv")
+    print("created new updated file")
     return df,file_obj
