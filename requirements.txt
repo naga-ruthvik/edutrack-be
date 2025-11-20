@@ -7,3 +7,5 @@ python-dotenv
 django-cors-headers
 drf-spectacular
 psycopg2
+pandas
+isort==7.0.0

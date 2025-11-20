@@ -159,7 +159,7 @@ def generate_usename_password(input_file, college_code):
     
     
     # 1. Load Data
-    df = load_data(CONFIG["input_file"])
+    df = pd.read_csv(input_file)
     if df is None:
         return
 
