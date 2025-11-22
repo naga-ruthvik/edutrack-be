@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -13,7 +13,7 @@ from users.permissions import IsFaculty, IsHod, IsInstitutuionAdmin, IsStudent
 from utils.generate_credentials import generate_usename_password
 
 from .models import Department, Institution
-from .serializers import ProfileSerializer, ProfileUploadSerializer
+from .serializers import ProfileSerializer, ProfileUploadSerializer, DepartmentProfileCreateSerilaizer, CreateDepartmentSerializer, CreateHODSerializer
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
 # class AdminView(ListAPIView):
@@ -34,7 +34,7 @@ class InstitutionStudentsAPIView(InstitutionFilterMixin, ListAPIView):
     #     queryset = super().get_queryset()
     #     return queryset
     
-class CreateProfilesView(GenericAPIView):
+class CreateBulkProfilesView(GenericAPIView):
     """Creates students and profiles in bulk from an Excel file."""
     serializer_class = ProfileUploadSerializer
     parser_classes = [MultiPartParser, FormParser] # Required for file upload
@@ -48,6 +48,9 @@ class CreateProfilesView(GenericAPIView):
 
         input_file = serializer.validated_data.get('file')
         role = serializer.validated_data.get('role').upper()
+        original_roles=['STUDENT','HOD','ADMIN','FACULTY']
+        if role not in original_roles:
+            return Response("Entered role is incorrect", status=400)
         college_code = serializer.validated_data.get('body') # Not used in logic, but retrieved
 
         # 2. Logic to process file
@@ -91,7 +94,6 @@ class CreateProfilesView(GenericAPIView):
                     if not department_id:
                         raise ValueError(f"Department '{dept_name}' not found for your institution.")
 
-                    print("-----------------creating user---------------")
                     # Create User (handles potential IntegrityError for duplicate username/email)
                     user = User.objects.create_user(
                         username=username,
@@ -102,9 +104,7 @@ class CreateProfilesView(GenericAPIView):
                     )
                     user.set_password(password) 
                     user.save() 
-                    print("-----------created user-----------",user)
                     # Create Profile
-                    print("-----------created profile-----------")
                     Profile.objects.create(
                         user=user,
                         first_name=row.get("First Name",""),
@@ -143,5 +143,127 @@ class CreateProfilesView(GenericAPIView):
         response['Content-Disposition'] = 'attachment; filename="credentials.csv"'
         response['X-Message'] = 'File generated successfully'
         response['X-Status'] = 'success'
-
         return response
+    
+class DepartmentProfileCreateAPIView(GenericAPIView):
+    """"creates profiles in specific department"""
+    serializer_class=DepartmentProfileCreateSerilaizer
+    permission_classes=[IsAuthenticated, IsHod]
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        data=serializer.validated_data
+
+        # get all the fields from data
+        username=data.get("username")
+        password=data.get("password")
+        first_name=data.get("first_name")
+        last_name=data.get("last_name")
+        identifier=data.get("identifier")
+        email=data.get("email")
+        role=data.get("role").upper() if data.get("role") else None
+        departmet=request.user.profile.department
+        institution=request.user.profile.institution
+        try:
+            with transaction.atomic():
+                user=User.objects.create_user(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    password=password,
+                    is_active=True
+                )
+
+                profile=Profile.objects.create(
+                    first_name=first_name,
+                    identifier=identifier,
+                    department=departmet,
+                    institution=institution,
+                    role=role,
+                    user=user
+                )
+                
+                return Response(ProfileSerializer(profile).data, status=201)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to create profile: {str(e)}"},
+                status=400
+            )
+
+        
+
+class CreateDepartmentAPIView(CreateAPIView):
+    """API that creates a new department of the institution"""
+    model=Department
+    queryset=Department.objects.all()
+    serializer_class=CreateDepartmentSerializer
+    permission_classes=[IsAuthenticated,IsInstitutuionAdmin]
+
+    # to make sure that the insititution id is added based on current insitution
+    def perform_create(self, serializer):
+        institution=self.request.user.profile.institution
+        serializer.save(institution=institution)
+
+class CreateHOD_APIView(GenericAPIView):
+    queryset=Profile.objects.all()
+    serializer_class=CreateHODSerializer
+    permission_classes=[IsAuthenticated, IsInstitutuionAdmin]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        institution=self.request.user.profile.institution
+        data=serializer.validated_data
+        first_name=data.get("first_name")
+        last_name=data.get("last_name")
+        role=data.get("role")
+        input_department=data.get("department")
+        username=data.get("username")
+        email=data.get("email")
+        password=data.get("password")
+
+        department=Department.objects.filter(institution=institution, name=input_department).first()
+        if not department:
+            return Response(
+                {"error": f"Department is not found, enter correct department"},
+                status=400
+            )
+
+        try:
+            with transaction.atomic():
+                user=User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    is_active=True
+                )
+
+                profile=Profile.objects.create(
+                    first_name=first_name,
+                    last_name=last_name,
+                    role=role,
+                    department=department,
+                    institution=institution,
+                    user=user
+                )
+
+        except Exception as e:
+            return Response(
+            {"error": f"Failed to create profile: {str(e)}"},
+            status=500
+        )
+
+        return Response(
+            {"role":profile.role,
+             "username":user.username,
+             "password":password
+             }, status=201
+        )

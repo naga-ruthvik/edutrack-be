@@ -1,2 +1,16 @@
-/venv
 README.md
+# Python cache
+__pycache__/
+*.pyc
+# Virtual environment
+venv/
+env/
+# Django stuff
+*.log
+*.sqlite3
+media/
+staticfiles/
+# VS Code workspace files
+.vscode/
+# Environment files
+.env
