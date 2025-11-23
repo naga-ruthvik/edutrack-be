@@ -3,7 +3,7 @@ from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from rest_framework import serializers
 from django.db import transaction
 from institutions.models import Institution
-from institutions.serializers import InstitutionCreateSerializer 
+from institutions.serializers import InstitutionCreateSerializer
 from .models import User, Profile
 
 class InstitutionAdminCreateSerializer(BaseUserCreateSerializer):

@@ -155,10 +155,10 @@ from datetime import timedelta
 
 SIMPLE_JWT = {
     # How long the main "access" token is valid for.
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     
     # How long the "refresh" token is valid for.
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=2),
 
     # More secure, but 'False' is simpler. Set to 'True' if you want
     # a new refresh token every time you get a new access token.

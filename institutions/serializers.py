@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from django.db import transaction
-from .models import Institution
+from .models import Institution, Department
 from users.models import Profile
-
 class InstitutionCreateSerializer(serializers.ModelSerializer):
     """
     serilaizer to create a new institution
@@ -44,4 +43,32 @@ class ProfileUploadSerializer(serializers.Serializer):
         if not (filename.endswith('.xlsx') or filename.endswith('.xls') or filename.endswith('.csv')):
             raise serializers.ValidationError("Only Excel files (.xlsx or .xls) are supported.")
         return value
-        
+
+
+class DepartmentProfileCreateSerilaizer(serializers.ModelSerializer):
+    username=serializers.CharField(write_only=True)
+    email=serializers.EmailField(write_only=True)
+    identifier=serializers.CharField(write_only=True)
+    password=serializers.CharField(write_only=True)
+    class Meta:
+        model=Profile
+        fields=('role','first_name','last_name','email','identifier','password','username')
+
+class CreateDepartmentSerializer(serializers.ModelSerializer):
+    """"serializer to create a department in specific institution"""
+    class Meta:
+        model=Department
+        fields=('name','description')
+
+class CreateHODSerializer(serializers.ModelSerializer):
+    """Serialzier to create HOD"""
+    role = serializers.ChoiceField(choices=[
+        Profile.Role.HOD,
+    ])
+    department=serializers.CharField()
+    username=serializers.CharField(write_only=True)
+    email=serializers.EmailField(write_only=True)
+    password=serializers.CharField(write_only=True)
+    class Meta:
+        model=Profile
+        fields=('first_name','last_name','role','department','username','email','password')
