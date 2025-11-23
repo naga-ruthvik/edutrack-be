@@ -138,7 +138,8 @@ class CreateBulkProfilesView(GenericAPIView):
 
         response = HttpResponse(
             updated_file_obj.getvalue().decode(),
-            content_type="text/csv"
+            content_type="text/csv",
+            status=200
         )
         response['Content-Disposition'] = 'attachment; filename="credentials.csv"'
         response['X-Message'] = 'File generated successfully'

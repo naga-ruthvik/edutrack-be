@@ -9,3 +9,5 @@ drf-spectacular
 psycopg2
 pandas
 isort==7.0.0
+chardet
+openpyxl

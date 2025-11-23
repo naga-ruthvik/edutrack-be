@@ -4,7 +4,8 @@ import os
 import re
 import string  # Required for random characters
 from datetime import datetime
-
+import chardet
+import io
 # --- Configuration ---
 # This is the only place you need to make changes
 CONFIG = {
@@ -146,55 +147,78 @@ def deduplicate_usernames(username_series):
     return pd.Series(final_usernames, index=username_series.index)
 
 def generate_usename_password(input_file, college_code):
-    """Main function to run the credential generation process."""
+    """
+    Main function to load the uploaded file, generate usernames and passwords, 
+    and return the processed DataFrame and the new credentials file object.
+    """
 
     CONFIG = {
-    "input_file": input_file,
-    "output_file": "student_credentials.csv",
-    "identifier": "Identifier",
-    "first_name":"First Name",
-    "last_name":"Last Name",
-    "dept_column": "Department",
-    "COLLEGE_CODE": college_code,  # Set your college code here
+        "output_file": "student_credentials.csv",
+        "identifier": "Identifier",
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "dept_column": "Department",
+        "COLLEGE_CODE": college_code,
     }
     
-    
-    # 1. Load Data
-    df = pd.read_csv(input_file)
-    if df is None:
-        return
+    df = None 
 
-    # 2. Validate Columns
-    required_cols = [CONFIG["first_name"], CONFIG["identifier"], CONFIG["dept_column"], CONFIG["first_name"]]
+    # --- 1. Load Data (Encoding & Pandas Handling) ---
+    try:
+        file_name = input_file.name
+        
+        # Determine if it's an Excel or CSV file
+        if file_name.lower().endswith(('.xlsx', '.xls')):
+            # Use the dedicated Excel reader for XLSX files
+            # Pandas can read the DRF InMemoryUploadedFile object directly for Excel
+            df = pd.read_excel(input_file)
+            
+        else:
+            # Assume CSV, proceed with encoding detection and fallback
+            raw = input_file.read()
+            det = chardet.detect(raw)
+            encoding = det["encoding"] or "utf-8"
+            
+            try:
+                # First attempt: Use guessed encoding
+                df = pd.read_csv(io.BytesIO(raw), encoding=encoding)
+            except UnicodeDecodeError:
+                # Second attempt: Use latin1 fallback
+                df = pd.read_csv(io.BytesIO(raw), encoding="latin1")
+
+        # ... rest of validation (df.empty check, etc.) ...
+        
+    except Exception as e:
+        # Re-raise error with context
+        raise RuntimeError(f"File reading failed due to formatting: {e}")
+    
+
+    # --- 2. Validate Columns ---
+    required_cols = [CONFIG["first_name"], CONFIG["last_name"], CONFIG["identifier"], CONFIG["dept_column"]]
     missing_cols = [col for col in required_cols if col not in df.columns]
     
     if missing_cols:
-        print(f"Error: Missing required columns: {missing_cols}")
-        print(f"Available columns are: {list(df.columns)}")
-        return
+        available_cols = list(df.columns)
+        raise ValueError(f"Missing required columns in the file: {', '.join(missing_cols)}. Available: {available_cols}")
 
-    # 3. Generate Usernames
-    print("Generating college-format usernames...")
+    # --- 3. Generate Usernames ---
     base_usernames = df.apply(
         create_college_username,
         axis=1,
         args=(CONFIG["identifier"], CONFIG["dept_column"], CONFIG["COLLEGE_CODE"])
     )
 
-    # 4. Handle Duplicates
-    print("Checking for duplicates...")
+    # --- 4. Handle Duplicates and Generate Passwords ---
     df['Username'] = deduplicate_usernames(base_usernames)
-
-    # 5. Generate Passwords
-    print("Generating custom pattern passwords...")
-    # This now uses df.apply() because it needs the 'name_column'
+    
     df['Password'] = df.apply(
         create_custom_password,
         axis=1,
         args=(CONFIG["first_name"],)
     )
 
-    # 6. Save Data
-    file_obj=save_data(df, "credentials.csv")
-    print("created new updated file")
-    return df,file_obj
+    # --- 5. Save Data and Return ---
+    # Create the final file object returned to the view.
+    updated_file_obj = save_data(df, CONFIG["output_file"])
+
+    return df, updated_file_obj

@@ -1,16 +1,35 @@
-README.md
-# Python cache
+# --- General Operating System Files ---
+.DS_Store
+Thumbs.db
+
+# --- Python & Cache Files ---
+# Ignore the temporary bytecode cache directory
 __pycache__/
+# Ignore compiled Python files
 *.pyc
-# Virtual environment
+# Ignore editor backup files
+*~
+# Ignore the generated output files (credentials)
+credentials.csv
+student_credentials.csv
+
+# --- Virtual Environments ---
+# Common virtual environment directories
 venv/
 env/
-# Django stuff
+.venv/
+/tmp
+
+# --- Django Specific Files ---
+# Logs and temporary databases
 *.log
 *.sqlite3
+# Uploaded media and collected static assets
 media/
 staticfiles/
-# VS Code workspace files
+
+# --- IDE/Environment Files ---
+# VS Code workspace files (if you want to ignore the whole folder)
 .vscode/
-# Environment files
+# Environment variable files
 .env
