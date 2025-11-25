@@ -13,7 +13,7 @@ from users.permissions import IsFaculty, IsHod, IsInstitutuionAdmin, IsStudent
 from utils.generate_credentials import generate_usename_password
 
 from .models import Department, Institution
-from .serializers import ProfileSerializer, ProfileUploadSerializer, DepartmentProfileCreateSerilaizer, CreateDepartmentSerializer, CreateHODSerializer
+from .serializers import ProfileSerializer, ProfileUploadSerializer, DepartmentProfileCreateSerilaizer, CreateDepartmentSerializer, CreateHODSerializer, ListHODSerializer
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
 # class AdminView(ListAPIView):
@@ -210,6 +210,7 @@ class CreateDepartmentAPIView(CreateAPIView):
         serializer.save(institution=institution)
 
 class CreateHOD_APIView(GenericAPIView):
+    """API to create a new HOD"""
     queryset=Profile.objects.all()
     serializer_class=CreateHODSerializer
     permission_classes=[IsAuthenticated, IsInstitutuionAdmin]
@@ -223,7 +224,7 @@ class CreateHOD_APIView(GenericAPIView):
         data=serializer.validated_data
         first_name=data.get("first_name")
         last_name=data.get("last_name")
-        role=data.get("role")
+        role=Profile.Role.HOD
         input_department=data.get("department")
         username=data.get("username")
         email=data.get("email")
@@ -268,3 +269,8 @@ class CreateHOD_APIView(GenericAPIView):
              "password":password
              }, status=201
         )
+
+class ListHOD_APIView(InstitutionFilterMixin,ListAPIView):
+    queryset=Profile.objects.filter(role=Profile.Role.HOD)
+    serializer_class=ListHODSerializer
+    permission_classes=[IsAuthenticated, IsInstitutuionAdmin]

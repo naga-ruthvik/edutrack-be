@@ -62,13 +62,29 @@ class CreateDepartmentSerializer(serializers.ModelSerializer):
 
 class CreateHODSerializer(serializers.ModelSerializer):
     """Serialzier to create HOD"""
-    role = serializers.ChoiceField(choices=[
-        Profile.Role.HOD,
-    ])
     department=serializers.CharField()
     username=serializers.CharField(write_only=True)
     email=serializers.EmailField(write_only=True)
     password=serializers.CharField(write_only=True)
     class Meta:
         model=Profile
-        fields=('first_name','last_name','role','department','username','email','password')
+        fields=('first_name','last_name','department','username','email','password')
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Department
+        fields=(
+            'name',
+        )
+
+class ListHODSerializer(serializers.ModelSerializer):
+    department = DepartmentSerializer(read_only=True)
+
+    class Meta:
+        model=Profile
+        fields=(
+            'department',
+            'first_name',
+            'last_name',
+            'identifier',          
+        )
