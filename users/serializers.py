@@ -5,6 +5,8 @@ from django.db import transaction
 from institutions.models import Institution
 from institutions.serializers import InstitutionCreateSerializer
 from .models import User, Profile
+from djoser.serializers import UserSerializer
+
 
 class InstitutionAdminCreateSerializer(BaseUserCreateSerializer):
     first_name = serializers.CharField(write_only=True, required=True)
@@ -71,3 +73,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 'write_only':True
             }
         }
+
+class UserProfileSerializer(UserSerializer):
+    role=serializers.SerializerMethodField(read_only=True)
+    def get_role(self, obj):
+        # Adjust as needed for your model relationship (e.g., obj.profile.role)
+        return obj.profile.role if hasattr(obj, 'profile') else None
+    class Meta(UserSerializer.Meta):
+        fields=UserSerializer.Meta.fields+('role',)

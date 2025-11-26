@@ -51,7 +51,12 @@ class Profile(models.Model):
                 # 2. The Magic Condition:
                 # Only enforce uniqueness if 'identifier' is NOT null and NOT empty
                 condition=Q(identifier__isnull=False) & ~Q(identifier='')
-            )
+            ),
+            models.UniqueConstraint(
+                fields=['department','institution'],
+                name='unique_hod_per_institution_department',
+                condition=Q(role='HOD')
+            ),
         ]
 
     def __str__(self):

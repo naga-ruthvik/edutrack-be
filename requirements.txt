@@ -11,3 +11,5 @@ pandas
 isort==7.0.0
 chardet
 openpyxl
+django-storages
+boto3

@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     # project apps
     'users',
     'institutions',
+    'achievements',
 ]
 
 MIDDLEWARE = [
@@ -202,6 +203,10 @@ DJOSER = {
     # --- Password Reset Settings ---
     # This MUST match your frontend's route for password reset
     'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
+
+    'SERIALIZERS': {
+        'current_user': 'users.serializers.UserProfileSerializer',
+    }
 }
 
 
