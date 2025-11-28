@@ -210,6 +210,27 @@ DJOSER = {
 }
 
 
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = "ap-south-1"
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "region_name": AWS_S3_REGION_NAME,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST="smtp.gmail.com"
 EMAIL_USE_TLS=True
@@ -220,3 +241,8 @@ EMAIL_HOST_PASSWORD=os.environ.get("EMAIL_HOST_PASSWORD")
 SPECTACULAR_SETTINGS = {
     'DISABLE_ERRORS_AND_WARNINGS': True
 }
+
+CELERY_BROKER_URL="redis://localhost:6379/1"
+# CELERY_RESULT_BACKEND="redis://localhost:6379/1"
+
+

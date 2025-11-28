@@ -1,5 +1,30 @@
 from django.db import models
 
+
+import os
+import uuid
+from django.db import models
+
+def certificate_upload_path(instance, filename):
+    """
+    Generates the S3 path: 
+    certificates/inst_<id>/student_<id>/<random_uuid>_<filename>
+    """
+    #Get the Institution ID
+    inst_id = instance.student.institution.id
+    
+    # 2. Get the Student ID (Profile ID or Roll Number)
+    student_id = instance.student.user_id
+    
+    # 3. Generate a random string to prevent filename collisions
+    # e.g., if user uploads 'certificate.pdf' twice, they won't overwrite
+    ext = filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4()}.{ext}"
+    
+    # 4. Construct the path
+    # S3 will treat the slashes as folder separators
+    return f"certificates/inst_{inst_id}/student_{inst_id}/{unique_filename}"
+
 class Skill(models.Model):
     """
     Standardized tags for skills (e.g., 'Python', 'Public Speaking').
@@ -32,7 +57,12 @@ class Certificate(models.Model):
     # --- USER INPUTS ---
     title = models.CharField(max_length=255)
     issuing_organization = models.CharField(max_length=255)
-    file_url = models.FileField(upload_to='certificates/')
+
+    # file url
+    file_url = models.FileField(
+        upload_to=certificate_upload_path,
+        max_length=255 
+    )
     
     # Link Skills (User Claims): What the student SAYS they learned
     claimed_skills = models.ManyToManyField(

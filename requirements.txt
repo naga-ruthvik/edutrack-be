@@ -13,3 +13,6 @@ chardet
 openpyxl
 django-storages
 boto3
+redis[hiredis]
+Celery
+flower

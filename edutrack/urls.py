@@ -35,5 +35,6 @@ urlpatterns = [
 
     # app urls
     path('',include('users.urls')),
-    path('',include('institutions.urls'))
+    path('',include('institutions.urls')),
+    path('achievements/',include('achievements.urls')),
 ]
