@@ -16,3 +16,5 @@ boto3
 redis[hiredis]
 Celery
 flower
+django-tenants
+django-silk
