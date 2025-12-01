@@ -7,6 +7,11 @@ class RegisterCollegeSerializer(serializers.Serializer):
     """
     college_name = serializers.CharField(max_length=100)
     slug = serializers.SlugField(max_length=50, help_text="Unique identifier (e.g. 'vardhaman')")
+    contact=serializers.CharField(max_length=15)
+    city=serializers.CharField(max_length=50)
+    state=serializers.CharField(max_length=50)
+    country=serializers.CharField(max_length=50)
+    pincode=serializers.CharField(max_length=10)
     admin_email = serializers.EmailField()
     password = serializers.CharField(
         write_only=True, 

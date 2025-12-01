@@ -42,11 +42,11 @@ class HODSerializer(serializers.ModelSerializer):
     """
     full_name = serializers.CharField(source='user.get_full_name')
     email = serializers.EmailField(source='user.email')
-    department_name = serializers.CharField(source='department.name')
+    department = serializers.CharField(source='department.code')
 
     class Meta:
         model = FacultyProfile
-        fields = ['employee_id', 'full_name', 'email', 'department_name']
+        fields = ['employee_id', 'full_name', 'email', 'department']
 
 class CreateHODSerializer(serializers.Serializer):
     first_name = serializers.CharField()

@@ -70,6 +70,7 @@ class CreateBulkProfilesView(GenericAPIView):
 
         input_file = serializer.validated_data['file']
         role = serializer.validated_data['role']
+        print(role)
         
         # Read Excel
         try:
@@ -80,11 +81,11 @@ class CreateBulkProfilesView(GenericAPIView):
         error_rows = []
         created_count = 0
         credentials_data = []  # Track credentials for Excel export
-
+        print(df['Department'])
         # Pre-fetch departments to avoid N+1 queries
         # Map Name -> ID (e.g., "CSE" -> 5)
-        dept_map = {d.name.lower(): d for d in Department.objects.all()}
-
+        dept_map = {d.code.lower(): d for d in Department.objects.all()}
+        print(dept_map)
         # Get college code - using default for now
         college_code = "88"  # You can make this configurable
 
@@ -102,7 +103,9 @@ class CreateBulkProfilesView(GenericAPIView):
                         continue # Skip bad rows
 
                     # 2. Get Department
+                    print("dept_name:  ",dept_name)
                     department = dept_map.get(dept_name)
+                    print("department:  ",department)
                     if not department:
                         error_rows.append(f"Row {index + 2}: Department '{dept_name}' not found")
                         continue
@@ -122,7 +125,7 @@ class CreateBulkProfilesView(GenericAPIView):
                             'Identifier': employee_id,
                             'First Name': first_name,
                             'Last Name': last_name,
-                            'Department': row.get('Department', '')
+                            'Department': department
                         })
                         
                         # Generate username using utility function
@@ -146,10 +149,11 @@ class CreateBulkProfilesView(GenericAPIView):
                         password=password,
                         first_name=first_name,
                         last_name=last_name,
-                        role=role # 'STUDENT' or 'FACULTY'
+                        role=role
                     )
 
                     # 3. Create Specific Profile
+                    print(f"adding {role} profile")
                     if role == 'STUDENT':
                         # Manually create StudentProfile
                         profile = StudentProfile.objects.create(
@@ -159,6 +163,7 @@ class CreateBulkProfilesView(GenericAPIView):
                             batch_year=2024,  # You may want to get this from the file
                             current_semester=1
                         )
+                        print("created student profile")
                         
                         # Track credentials
                         credentials_data.append({
@@ -168,7 +173,7 @@ class CreateBulkProfilesView(GenericAPIView):
                             'Username': username,
                             'Password': password,
                             'Role': 'Student',
-                            'Department': department.name,
+                            'Department': department,
                             'Roll Number': roll_number,
                             'Status': 'Success'
                         })
@@ -191,7 +196,7 @@ class CreateBulkProfilesView(GenericAPIView):
                             'Username': username,
                             'Password': password,
                             'Role': 'Faculty',
-                            'Department': department.name,
+                            'Department': department,
                             'Employee ID': employee_id,
                             'Status': 'Success'
                         })

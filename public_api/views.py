@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
 from django_tenants.utils import schema_context
+from djoser.email import ActivationEmail
 
 # Models
 from customers.models import Institution, Domain
@@ -54,11 +55,18 @@ class RegisterCollegeView(GenericAPIView):
                         password=password,
                         role='ADMIN', 
                         is_staff=True, 
-                        is_superuser=True 
+                        is_superuser=True,
+                        is_active=False # User must activate via email
                     )
 
+                    # We need to pass the request context so Djoser can build the absolute URL
+                    context = {'user': user}
+                    to = [user.email]
+                    email = ActivationEmail(context=context)
+                    email.send(to)
+
             return Response({
-                "message": f"College '{college_name}' created successfully.",
+                "message": f"College '{college_name}' created successfully. Activation email sent to {admin_email}.",
                 "login_url": f"/api/{slug}/auth/jwt/create/"
             }, status=status.HTTP_201_CREATED)
 
