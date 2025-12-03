@@ -8,6 +8,8 @@ from resume.services.resume_generator import generate_resume_service
 from resume.services.get_student_details import generate_student_details
 from authentication.permissions import IsStudent 
 from .models import Resume
+from resume.services.resume_analyzer import analyze_resume
+from rest_framework.views import APIView
 
 class GenerateResumeAPIView(generics.GenericAPIView):
     serializer_class = ResumeSerializer
@@ -74,3 +76,30 @@ class UpdateResumeAPIView(generics.UpdateAPIView):
             status=status.HTTP_200_OK
         )
     
+class AnalyzeResumeAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsStudent]
+
+    def get_object(self):
+        resume = Resume.objects.filter(
+            student=self.request.user.student_profile
+        ).last()
+        if not resume:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("No resume found to analyze.")
+        return resume
+
+    def post(self, request, *args, **kwargs):
+        resume = self.get_object()
+        resume_details = resume.tailored_content
+
+        jd_text = request.data.get("job_description", "")
+
+        if not resume_details:
+            return Response(
+                {"error": "Resume details aren't present"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        resume_response = analyze_resume(resume_details, jd_text)
+
+        return Response(resume_response, status=status.HTTP_200_OK)

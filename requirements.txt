@@ -20,3 +20,4 @@ django-tenants
 django-silk
 google-generativeai
 google
+scikit-learn
