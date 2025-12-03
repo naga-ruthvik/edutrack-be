@@ -21,4 +21,6 @@ urlpatterns = [
     path('users/', include('authentication.urls')),
     path('administration/', include('academics.urls')),
     path('achievements/', include('achievements.urls')),
+    path('resume/',include('resume.urls')),
+    path('silk/', include('silk.urls', namespace='silk')),
 ]

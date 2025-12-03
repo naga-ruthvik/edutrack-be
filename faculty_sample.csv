@@ -1,0 +1,6 @@
+Email,First Name,Last Name,Department,Employee ID,Designation
+faculty1@example.com,Dr. Alan,Turing,CSE,FAC001,PROFESSOR
+faculty2@example.com,Dr. Grace,Hopper,ECE,FAC002,ASSOC_PROF
+faculty3@example.com,Dr. Nikola,Tesla,EEE,FAC003,ASST_PROF
+faculty4@example.com,Dr. Isaac,Newton,MECH,FAC004,PROFESSOR
+faculty5@example.com,Dr. Marie,Curie,CIVIL,FAC005,ASSOC_PROF

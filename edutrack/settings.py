@@ -47,7 +47,9 @@ TENANT_APPS = (
     'authentication',
     'profiles',
     'academics',
-    'achievements'
+    'achievements',
+    'resume',
+    'silk',
 )
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -68,6 +70,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'edutrack.debug_middleware.DebugTenantSubfolderMiddleware',
+    'silk.middleware.SilkyMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

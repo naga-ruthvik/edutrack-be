@@ -19,7 +19,7 @@ class CertificateUploadAPIView(GenericAPIView):
             # We pass the student (user profile) here because it's not in the request data
             try:
                 # This saves to DB and automatically uploads to S3 via the Model Field
-                certificate = serializer.save(student=request.user.profile)
+                certificate = serializer.save(student=request.user.student_profile)
                 
                 # This ensures the DB transaction is finished before Celery tries to read the record
                 transaction.on_commit(

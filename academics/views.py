@@ -48,12 +48,10 @@ class InstitutionStudentsAPIView(ListAPIView):
 
     def get_queryset(self):
         # Simply return all. The DB Schema limits this to the current college.
-        return StudentProfile.objects.all()
+        return StudentProfile.objects.select_related('user', 'department').all()
 
 
-# ---------------------------------------------------
 # 2. BULK UPLOAD (Heavy Refactor)
-# ---------------------------------------------------
 class CreateBulkProfilesView(GenericAPIView):
     serializer_class = BulkProfileUploadSerializer
     parser_classes = [MultiPartParser, FormParser]

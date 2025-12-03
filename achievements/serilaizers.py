@@ -11,7 +11,7 @@ class CertificateUploadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Certificate
-        fields = ["title", "issuing_organization", "file_url", "skills"]
+        fields = ["title","file_url", "verification_url", "skills"]
 
     def validate_skills(self, value):
         import json
@@ -34,7 +34,9 @@ class CertificateUploadSerializer(serializers.ModelSerializer):
         value = [s.lower().strip() for s in value]
 
         # DB validation
+        print("value",value)
         existing = Skill.objects.filter(name__in=value)
+        print("existing:",existing)
         if existing.count() != len(value):
             missing = set(value) - set(s.name for s in existing)
             raise serializers.ValidationError(f"Invalid skills: {', '.join(missing)}")
@@ -51,5 +53,5 @@ class CertificateUploadSerializer(serializers.ModelSerializer):
         skills_names = validated_data.pop("skills")
         certificate = Certificate.objects.create(**validated_data)
         skills_to_add = Skill.objects.filter(name__in=skills_names)
-        certificate.claimed_skills.add(*skills_to_add)
+        certificate.secondary_skills.add(*skills_to_add)
         return certificate

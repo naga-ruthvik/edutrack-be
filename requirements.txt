@@ -18,3 +18,5 @@ Celery
 flower
 django-tenants
 django-silk
+google-generativeai
+google

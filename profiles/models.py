@@ -68,3 +68,37 @@ class FacultyProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.get_designation_display()})"
+
+
+class Education(models.Model):
+    class Level(models.TextChoices):
+        SCHOOL_10 = '10', 'Class 10'
+        SCHOOL_12 = '12', 'Class 12'
+        DIPLOMA = 'DIPLOMA', 'Diploma'
+        UNDERGRAD = 'UG', 'Undergraduate'
+        POSTGRAD = 'PG', 'Postgraduate'
+
+    # Link to the Student Profile (One-to-Many)
+    student = models.ForeignKey(
+        'StudentProfile', 
+        on_delete=models.CASCADE, 
+        related_name='education_history' # Access via: profile.education_history.all()
+    )
+    
+    institution_name = models.CharField(max_length=255) # e.g. "Delhi Public School"
+    board_or_university = models.CharField(max_length=255) # e.g. "CBSE", "JNTU"
+    level = models.CharField(max_length=20, choices=Level.choices)
+    
+    # Flexible scoring (CGPA or Percentage)
+    score = models.CharField(max_length=20, help_text="e.g. 9.8 CGPA or 88%")
+    
+    passing_year = models.IntegerField()
+    
+    # Optional: Upload marks memo if you need proof
+    # proof_file = models.FileField(...)
+
+    class Meta:
+        ordering = ['-passing_year'] # Show latest first
+
+    def __str__(self):
+        return f"{self.level} - {self.student.user.get_full_name()}"
