@@ -309,3 +309,11 @@ class ListHOD_APIView(ListAPIView):
     def get_queryset(self):
         # Filter Faculty where is_hod = True
         return FacultyProfile.objects.filter(is_hod=True)
+
+
+class DepartmentListAPIView(ListAPIView):
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated, IsInstitutionAdmin]
+
+    def get_queryset(self):
+        return Department.objects.all()

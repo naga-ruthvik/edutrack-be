@@ -4,7 +4,8 @@ from .views import (
     CreateBulkProfilesView,
     CreateDepartmentAPIView,
     CreateHOD_APIView,
-    ListHOD_APIView
+    ListHOD_APIView,
+    DepartmentListAPIView
     # Removed DepartmentProfileCreateAPIView (Use Djoser or Bulk instead)
 )
 
@@ -23,4 +24,5 @@ urlpatterns = [
     
     # List HODs
     path('list-hods/', ListHOD_APIView.as_view(), name='list-hods'),
+    path('departments/',DepartmentListAPIView.as_view(),name="department-list")
 ]
