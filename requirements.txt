@@ -39,3 +39,6 @@ scipy
 torch
 torchvision
 tqdm
+tenacity
+playwright
+pypdf
