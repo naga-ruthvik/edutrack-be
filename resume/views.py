@@ -37,10 +37,12 @@ class GenerateResumeAPIView(generics.GenericAPIView):
 
         resume.tailored_content = resume_response
         resume.save()
+        data = ResumeSerializer(resume).data
+        data["tailored_content"] = resume.tailored_content
 
         return Response(
-            ResumeSerializer(resume).data,
-        status=status.HTTP_201_CREATED
+            data,
+            status=status.HTTP_201_CREATED
         )
 
 
