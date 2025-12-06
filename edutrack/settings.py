@@ -50,6 +50,7 @@ TENANT_APPS = (
     'achievements',
     'resume',
     'silk',
+    'lms'
 )
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
