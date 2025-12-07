@@ -2,9 +2,10 @@ from rest_framework import serializers
 from .models import Resume
 
 class ResumeSerializer(serializers.ModelSerializer):
+    id=serializers.IntegerField(read_only=True)
     class Meta:
         model = Resume
-        fields = ('title','job_description','template_style')
+        fields = ('id','title','job_description','template_style')
 
 class UpdateResumeSerializer(serializers.ModelSerializer):
     class Meta:

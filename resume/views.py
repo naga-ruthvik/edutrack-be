@@ -40,7 +40,7 @@ class GenerateResumeAPIView(generics.GenericAPIView):
         data = ResumeSerializer(resume).data
         data["tailored_content"] = resume.tailored_content
 
-        return Response(
+        return Response(    
             data,
             status=status.HTTP_201_CREATED
         )
@@ -105,3 +105,30 @@ class AnalyzeResumeAPIView(APIView):
         resume_response = analyze_resume(resume_details, jd_text)
 
         return Response(resume_response, status=status.HTTP_200_OK)
+
+
+class ResumeAPIView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, IsStudent]
+    serializer_class = ResumeSerializer
+    lookup_field='pk'
+
+    def get_object(self):
+        resume = Resume.objects.filter(pk=self.kwargs['pk']).last()
+        if not resume:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("No resume found to analyze.")
+        return resume
+
+    def get(self, request, *args, **kwargs):
+        resume = self.get_object()
+        resume_details={}
+        resume_details["tailored_content"] = resume.tailored_content
+        resume_details["id"] = resume.id
+
+        if not resume_details:
+            return Response(
+                {"error": "Resume details aren't present"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(resume_details, status=status.HTTP_200_OK)
