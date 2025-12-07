@@ -123,7 +123,7 @@ class ResumeAPIView(generics.RetrieveAPIView):
         resume = self.get_object()
         resume_details={}
         resume_details["tailored_content"] = resume.tailored_content
-        resume_details["id"] = resume.id
+        # resume_details["id"] = resume.id
 
         if not resume_details:
             return Response(
@@ -132,3 +132,10 @@ class ResumeAPIView(generics.RetrieveAPIView):
             )
 
         return Response(resume_details, status=status.HTTP_200_OK)
+
+
+class ListResumeAPIView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsStudent]
+    serializer_class = ResumeSerializer
+    def get_queryset(self):
+        return Resume.objects.filter(student=self.request.user.student_profile)

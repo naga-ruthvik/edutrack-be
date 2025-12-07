@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from authentication.models import User
 from profiles.models import StudentProfile, FacultyProfile
-from .models import Department
+from academics.models import Department
 
 class InstitutionCreateSerializer(serializers.Serializer):
     """
@@ -53,5 +53,12 @@ class CreateHODSerializer(serializers.Serializer):
     last_name = serializers.CharField()
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
-    department_id = serializers.IntegerField()
+    department_id = serializers.ChoiceField(choices=[])
     username = serializers.CharField(required=False) # Optional, can derive from email
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.fields['department_id'].choices = list(Department.objects.values_list('id', 'code'))
+        except Exception:
+            pass

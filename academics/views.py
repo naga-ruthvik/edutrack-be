@@ -12,11 +12,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
-
+from rest_framework.decorators import permission_classes,api_view
 # Models
 from authentication.models import User
 from profiles.models import StudentProfile, FacultyProfile
 from .models import Department
+from achievements.models import Certificate
+from django.db.models import Sum
 
 # Permissions
 from authentication.permissions import IsInstitutionAdmin, IsFaculty # Assuming you created these
@@ -48,7 +50,8 @@ class InstitutionStudentsAPIView(ListAPIView):
 
     def get_queryset(self):
         # Simply return all. The DB Schema limits this to the current college.
-        return StudentProfile.objects.select_related('user', 'department').all()
+        # specific to your serializer fields
+        return StudentProfile.objects.select_related('department').all()
 
 
 # 2. BULK UPLOAD (Heavy Refactor)
@@ -312,8 +315,32 @@ class ListHOD_APIView(ListAPIView):
 
 
 class DepartmentListAPIView(ListAPIView):
+    """
+    Returns a list of all departments in the institution.
+    """
     serializer_class = DepartmentSerializer
     permission_classes = [IsAuthenticated, IsInstitutionAdmin]
 
     def get_queryset(self):
         return Department.objects.all()
+
+# ---------------------------------------------------
+# 6. TOTAL STUDENTS
+# ---------------------------------------------------
+@permission_classes([IsAuthenticated,IsInstitutionAdmin])
+@api_view(['GET'])
+def total_students_view(request):
+    """
+    Returns the total number of students in the institution.
+    """
+    students = StudentProfile.objects.count()
+    return Response({"total_students": students})
+
+@permission_classes([IsAuthenticated,IsInstitutionAdmin])
+@api_view(['GET'])
+def total_score_view(request):
+    """
+    Returns the total number of students in the institution.
+    """
+    total_score=Certificate.objects.aggregate(Sum('score'))['score__sum']
+    return Response({"total_score": total_score})

@@ -8,6 +8,7 @@ class ResumeSerializer(serializers.ModelSerializer):
         fields = ('id','title','job_description','template_style')
 
 class UpdateResumeSerializer(serializers.ModelSerializer):
+    id=serializers.IntegerField(read_only=True)
     class Meta:
         model = Resume
-        fields = ('tailored_content','template_style')
+        fields = ('id','tailored_content','template_style')
