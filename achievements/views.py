@@ -1,15 +1,20 @@
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
-from .serilaizers import CertificateUploadSerializer
+from .serializers import CertificateUploadSerializer, CertificateListSerializer
 from rest_framework.response import Response
 from .tasks import process_certificate_verification
 # Create your views here.
-from django.db import transaction
+from django.db import transaction, connection
 from rest_framework import status
+from authentication.permissions import IsStudent
+from rest_framework.decorators import permission_classes, api_view
+from utils.generate_presigned_url import generate_presigned_url  # Import 
+from authentication.models import User
+from .models import Certificate
 
 class CertificateUploadAPIView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStudent]
     serializer_class = CertificateUploadSerializer
 
     def post(self, request, *args, **kwargs):
@@ -18,12 +23,22 @@ class CertificateUploadAPIView(GenericAPIView):
         if serializer.is_valid():
             # We pass the student (user profile) here because it's not in the request data
             try:
-                # This saves to DB and automatically uploads to S3 via the Model Field
+                # 1. Save to DB and automatically upload to S3 via the Model Field
                 certificate = serializer.save(student=request.user.student_profile)
                 
-                # This ensures the DB transaction is finished before Celery tries to read the record
+                # 2. Generate Presigned URL
+                # certificate.file.name contains the S3 Object Key (e.g. "certificates/student_1/doc.pdf")
+                object_key = certificate.file_url.name
+                presigned_url = generate_presigned_url(object_key)
+                
+                if not presigned_url:
+                    raise Exception("Failed to generate secure access URL")
+
+                # 3. Trigger Celery Task with the secure Presigned URL
+                # Pass schema_name to ensure task runs in correct tenant context
+                schema_name = connection.schema_name
                 transaction.on_commit(
-                    lambda: process_certificate_verification.delay(certificate.id,"kondenagaruthvik")
+                    lambda: process_certificate_verification.delay(presigned_url, certificate.id, schema_name)
                 )
 
                 return Response({
@@ -37,3 +52,35 @@ class CertificateUploadAPIView(GenericAPIView):
         
         # 4. Return errors if data was bad
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def list_certificates(request):
+
+    user = request.user
+    print("ROLE:", request.user.role)
+    print("FAC:", User.Role.FACULTY)
+    print("STU:", User.Role.STUDENT)
+
+    if user.role == User.Role.STUDENT:
+        # Student → only THEIR certificates
+        certificates = Certificate.objects.filter(
+            student=user.student_profile
+        ).select_related("student", "student__user", "verified_by")
+
+    elif user.role == User.Role.FACULTY:
+        # Faculty → certificates of ALL students under this mentor
+        certificates = Certificate.objects.filter(
+            student__mentor=user.faculty_profile
+        ).select_related("student", "student__user", "verified_by")
+
+    else:
+        # Admin/HOD → all certificates
+        certificates = Certificate.objects.all().select_related(
+            "student", "student__user", "verified_by"
+        )
+    
+    serializer = CertificateListSerializer(certificates, many=True)
+    return Response(serializer.data)
+
+
