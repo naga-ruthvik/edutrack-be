@@ -20,3 +20,4 @@ class ListApplicationsAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return Application.objects.filter(job__organization=self.request.user.recruiter_profile.organization)
+

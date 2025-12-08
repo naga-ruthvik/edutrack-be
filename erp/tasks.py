@@ -1,5 +1,6 @@
 # erp/tasks.py
 import requests
+from celery import shared_task, chain
 from django_tenants.utils import schema_context
 from datetime import datetime
 from authentication.models import User
@@ -39,6 +40,7 @@ def fetch_erp(endpoint: str):
     return []
 
 
+@shared_task
 def sync_users(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("users")
@@ -59,6 +61,7 @@ def sync_users(schema_name: str):
         return {"synced": synced}
 
 
+@shared_task
 def sync_departments(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("departments")
@@ -74,6 +77,7 @@ def sync_departments(schema_name: str):
         print(f"{schema_name}: {synced} departments")
         return {"synced": synced}
 
+@shared_task
 def sync_faculty(schema_name: str):
     from django.contrib.auth import get_user_model
     User = get_user_model()
@@ -116,6 +120,7 @@ def sync_faculty(schema_name: str):
 
 
 
+@shared_task
 def sync_students(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("students")
@@ -166,6 +171,7 @@ def sync_students(schema_name: str):
         print(f"{schema_name}: {synced} students")
         return {"synced": synced}
 
+@shared_task
 def sync_courses(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("courses")
@@ -192,6 +198,7 @@ def sync_courses(schema_name: str):
         print(f"{schema_name}: {synced} courses")
         return {"synced": synced}
 
+@shared_task
 def sync_subjects(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("subjects")
@@ -231,6 +238,7 @@ def sync_subjects(schema_name: str):
 
 
 
+@shared_task
 def sync_exams(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("exams")
@@ -267,6 +275,7 @@ def sync_exams(schema_name: str):
 
 
 
+@shared_task
 def sync_student_enrollments(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("enrollments")
@@ -300,6 +309,7 @@ def sync_student_enrollments(schema_name: str):
 
 
 
+@shared_task
 def sync_marks_grades(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("marks")
@@ -330,6 +340,7 @@ def sync_marks_grades(schema_name: str):
         return {"synced": synced, "skipped": skipped}
 
 
+@shared_task
 def sync_placement_records(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("placements")
@@ -360,6 +371,7 @@ def sync_placement_records(schema_name: str):
 
 
 
+@shared_task
 def sync_placement_stats(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("placement-stats")
@@ -382,6 +394,7 @@ def sync_placement_stats(schema_name: str):
         return {"synced": synced}
 
 
+@shared_task
 def sync_alumni(schema_name: str):
     with schema_context(schema_name):
         data = fetch_erp("alumni")
@@ -415,18 +428,29 @@ def sync_alumni(schema_name: str):
         return {"synced": synced, "skipped": skipped}
 
 
-def sync_all_erp_for_schema(schema_name: str):
-    return {
-        "users": sync_users(schema_name),
-        "departments": sync_departments(schema_name),
-        "faculty": sync_faculty(schema_name),
-        "students": sync_students(schema_name),
-        "courses": sync_courses(schema_name),
-        "subjects": sync_subjects(schema_name),
-        "exams": sync_exams(schema_name),
-        "enrollments": sync_student_enrollments(schema_name),
-        "marks": sync_marks_grades(schema_name),
-        "placements": sync_placement_records(schema_name),
-        "stats": sync_placement_stats(schema_name),
-        "alumni": sync_alumni(schema_name),
-    }
+@shared_task
+def run_full_sync(schema_name: str):
+    """
+    Orchestrates the full ERP sync in dependency order using Celery chain.
+    """
+    print(f"Starting full ERP sync for schema: {schema_name}")
+    
+    # Use chain with .si() (immutable signature) to ignore previous task outputs
+    # and pass 'schema_name' explicitly to each.
+    workflow = chain(
+        sync_users.si(schema_name),
+        sync_departments.si(schema_name),
+        sync_faculty.si(schema_name),
+        sync_students.si(schema_name),
+        sync_courses.si(schema_name),
+        sync_subjects.si(schema_name),
+        sync_exams.si(schema_name),
+        sync_student_enrollments.si(schema_name),
+        sync_marks_grades.si(schema_name),
+        sync_placement_records.si(schema_name),
+        sync_placement_stats.si(schema_name),
+        sync_alumni.si(schema_name)
+    )
+    
+    workflow.apply_async()
+    return f"Triggered full ERP sync for {schema_name}"
