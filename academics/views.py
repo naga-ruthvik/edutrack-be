@@ -7,7 +7,7 @@ from io import BytesIO
 from django.db import transaction, IntegrityError
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
-from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView, RetrieveAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -20,8 +20,9 @@ from .models import Department
 from achievements.models import Certificate
 from django.db.models import Sum
 
+
 # Permissions
-from authentication.permissions import IsInstitutionAdmin, IsFaculty # Assuming you created these
+from authentication.permissions import IsInstitutionAdmin, IsFaculty, IsStudent # Assuming you created these
 
 # Serializers
 from .serializers import (
@@ -29,8 +30,11 @@ from .serializers import (
     CreateDepartmentSerializer, 
     CreateHODSerializer, 
     HODSerializer,
-    DepartmentSerializer
+    DepartmentSerializer,
+    StudentDetailSerializer,
 )
+
+from authentication.serializers import StudentProfileSerializer
 
 # Utilities
 from utils.generate_credentials import create_college_username, create_custom_password, save_data
@@ -344,3 +348,35 @@ def total_score_view(request):
     """
     total_score=Certificate.objects.aggregate(Sum('score'))['score__sum']
     return Response({"total_score": total_score})
+
+
+class StudentProfileAPIView(ListAPIView):
+    serializer_class = StudentProfileSerializer
+    permission_classes = [IsAuthenticated, IsStudent]
+
+    def get_queryset(self):
+        return StudentProfile.objects.all()
+
+class FacultyStudentsAPIView(ListAPIView):
+    """
+    Lists all students in the CURRENT tenant.
+    No mixin needed. Schema handles isolation.
+    """
+    permission_classes = [IsAuthenticated, IsFaculty]
+    # Serializer needed for response (you can reuse the one from users app)
+    serializer_class = StudentProfileSerializer
+
+    def get_queryset(self):
+        # Simply return all. The DB Schema limits this to the current college.
+        # specific to your serializer fields
+        return StudentProfile.objects.filter(mentor=self.request.user.faculty_profile)
+
+class StudentDetailsAPIView(RetrieveAPIView):
+    permission_classes=[IsStudent]
+    serializer_class=StudentDetailSerializer
+    lookup_field='pk'
+
+    def get_queryset(self):
+        return StudentProfile.objects.filter(user=self.request.user)
+
+

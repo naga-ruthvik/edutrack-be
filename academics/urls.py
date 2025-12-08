@@ -7,7 +7,10 @@ from .views import (
     ListHOD_APIView,
     DepartmentListAPIView,
     total_students_view,
-    total_score_view
+    total_score_view,
+    FacultyStudentsAPIView,
+    StudentDetailsAPIView,
+    StudentProfileAPIView,
     # Removed DepartmentProfileCreateAPIView (Use Djoser or Bulk instead)
 )
 
@@ -28,5 +31,8 @@ urlpatterns = [
     path('list-hods/', ListHOD_APIView.as_view(), name='list-hods'),
     path('departments/',DepartmentListAPIView.as_view(),name="department-list"),
     path('total-students/',total_students_view,name="total_students"),
-    path('total-score/',total_score_view,name="total_score")
+    path('total-score/',total_score_view,name="total_score"),
+    path('faculty-students/',FacultyStudentsAPIView.as_view(),name="faculty-students"),
+    path('student-profile/',StudentProfileAPIView.as_view(),name="student-profile"),
+    path('student-details/<int:pk>/',StudentDetailsAPIView.as_view(),name="student_profile")
 ]
