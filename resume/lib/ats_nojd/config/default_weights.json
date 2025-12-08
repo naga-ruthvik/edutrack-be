@@ -1,0 +1,9 @@
+{
+    "keyword_match": 0.30,
+    "title_match": 0.10,
+    "education_match": 0.10,
+    "experience_match": 0.15,
+    "format_compliance": 0.15,
+    "action_verbs_grammar": 0.10,
+    "readability": 0.10
+}
