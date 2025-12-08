@@ -1,0 +1,74 @@
+{
+    "achievement_verbs": [
+        "achieved", "accomplished", "attained", "completed", "delivered", 
+        "exceeded", "finished", "fulfilled", "obtained", "reached",
+        "secured", "surpassed", "earned", "won", "gained", "realized",
+        "captured", "generated", "produced", "yielded"
+    ],
+    "leadership_verbs": [
+        "led", "managed", "supervised", "directed", "coordinated", "guided",
+        "mentored", "coached", "facilitated", "spearheaded", "headed",
+        "oversaw", "administered", "governed", "steered", "orchestrated",
+        "championed", "pioneered", "influenced", "motivated"
+    ],
+    "creation_verbs": [
+        "created", "developed", "designed", "built", "established", "founded",
+        "initiated", "launched", "pioneered", "introduced", "instituted",
+        "originated", "formulated", "constructed", "assembled", "fabricated",
+        "engineered", "crafted", "authored", "composed"
+    ],
+    "improvement_verbs": [
+        "improved", "enhanced", "optimized", "streamlined", "upgraded",
+        "modernized", "revitalized", "transformed", "revolutionized",
+        "refined", "strengthened", "accelerated", "maximized", "boosted",
+        "elevated", "advanced", "progressed", "enriched", "amplified"
+    ],
+    "analytical_verbs": [
+        "analyzed", "evaluated", "assessed", "researched", "investigated",
+        "examined", "studied", "reviewed", "monitored", "measured",
+        "calculated", "computed", "estimated", "forecasted", "projected",
+        "interpreted", "diagnosed", "audited", "surveyed", "inspected"
+    ],
+    "problem_solving_verbs": [
+        "solved", "resolved", "troubleshot", "debugged", "fixed", "addressed",
+        "handled", "tackled", "overcome", "mitigated", "eliminated",
+        "corrected", "rectified", "remedied", "restored", "repaired",
+        "diagnosed", "identified", "isolated", "prevented"
+    ],
+    "communication_verbs": [
+        "communicated", "presented", "demonstrated", "explained", "articulated",
+        "conveyed", "illustrated", "clarified", "informed", "briefed",
+        "reported", "documented", "wrote", "authored", "published",
+        "broadcasted", "advocated", "negotiated", "persuaded", "influenced"
+    ],
+    "collaboration_verbs": [
+        "collaborated", "partnered", "cooperated", "contributed", "participated",
+        "supported", "assisted", "helped", "facilitated", "coordinated",
+        "synchronized", "unified", "integrated", "consolidated", "merged",
+        "aligned", "engaged", "involved", "consulted", "advised"
+    ],
+    "implementation_verbs": [
+        "implemented", "executed", "deployed", "installed", "configured",
+        "established", "operationalized", "activated", "launched", "rolled out",
+        "integrated", "migrated", "transitioned", "adopted", "incorporated",
+        "enacted", "applied", "utilized", "leveraged", "employed"
+    ],
+    "management_verbs": [
+        "planned", "organized", "scheduled", "allocated", "budgeted",
+        "prioritized", "delegated", "assigned", "distributed", "coordinated",
+        "supervised", "monitored", "tracked", "controlled", "regulated",
+        "maintained", "sustained", "preserved", "protected", "safeguarded"
+    ],
+    "sales_marketing_verbs": [
+        "sold", "marketed", "promoted", "advertised", "campaigned",
+        "targeted", "segmented", "positioned", "branded", "launched",
+        "generated", "converted", "acquired", "retained", "expanded",
+        "penetrated", "captured", "negotiated", "closed", "secured"
+    ],
+    "training_development_verbs": [
+        "trained", "educated", "taught", "instructed", "mentored",
+        "coached", "developed", "cultivated", "nurtured", "guided",
+        "empowered", "enabled", "prepared", "equipped", "certified",
+        "skilled", "upskilled", "onboarded", "oriented", "familiarized"
+    ]
+}

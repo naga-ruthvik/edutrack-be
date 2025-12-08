@@ -1,0 +1,107 @@
+{
+    "programming_languages": [
+        "python", "java", "javascript", "typescript", "c++", "c#", "go", "rust", 
+        "ruby", "php", "swift", "kotlin", "scala", "r", "matlab", "sql", "c",
+        "perl", "bash", "shell", "powershell", "vba", "dart", "lua", "haskell"
+    ],
+    "web_technologies": [
+        "html", "css", "react", "angular", "vue", "svelte", "node.js", "express",
+        "django", "flask", "spring boot", "laravel", "ruby on rails", "asp.net",
+        "jquery", "bootstrap", "tailwind", "sass", "less", "webpack", "next.js",
+        "nuxt.js", "gatsby", "blazor", "phoenix", "fastapi"
+    ],
+    "databases": [
+        "mysql", "postgresql", "mongodb", "redis", "elasticsearch", "cassandra",
+        "oracle", "sql server", "sqlite", "dynamodb", "neo4j", "couchdb",
+        "firebase", "supabase", "mariadb", "influxdb", "clickhouse", "snowflake"
+    ],
+    "cloud_platforms": [
+        "aws", "azure", "gcp", "heroku", "digitalocean", "linode", "cloudflare",
+        "vercel", "netlify", "railway", "render", "fly.io", "vultr", "ovh"
+    ],
+    "devops_tools": [
+        "docker", "kubernetes", "jenkins", "gitlab ci", "github actions", 
+        "terraform", "ansible", "puppet", "chef", "vagrant", "circleci",
+        "travis ci", "bamboo", "teamcity", "octopus deploy", "spinnaker",
+        "helm", "istio", "prometheus", "grafana", "elk stack", "datadog"
+    ],
+    "data_science": [
+        "pandas", "numpy", "scikit-learn", "tensorflow", "pytorch", "keras",
+        "matplotlib", "seaborn", "plotly", "jupyter", "anaconda", "spyder",
+        "spark", "hadoop", "kafka", "airflow", "dbt", "streamlit", "dash",
+        "tableau", "power bi", "qlik", "looker", "databricks"
+    ],
+    "mobile_development": [
+        "react native", "flutter", "ionic", "xamarin", "android", "ios",
+        "swift", "objective-c", "java", "kotlin", "cordova", "phonegap",
+        "unity", "unreal engine", "cocos2d"
+    ],
+    "testing_frameworks": [
+        "pytest", "unittest", "jest", "mocha", "selenium", "cypress", "junit",
+        "testng", "cucumber", "jasmine", "karma", "protractor", "playwright",
+        "appium", "postman", "newman", "k6", "jmeter"
+    ],
+    "project_management": [
+        "agile", "scrum", "kanban", "waterfall", "jira", "confluence", "trello",
+        "asana", "monday.com", "notion", "slack", "teams", "zoom", "basecamp",
+        "clickup", "linear", "github projects", "azure devops"
+    ],
+    "soft_skills": [
+        "leadership", "communication", "teamwork", "problem solving", 
+        "critical thinking", "time management", "adaptability", "creativity",
+        "analytical thinking", "attention to detail", "multitasking",
+        "conflict resolution", "mentoring", "coaching", "presentation skills"
+    ],
+    "security": [
+        "cybersecurity", "penetration testing", "vulnerability assessment",
+        "owasp", "security auditing", "encryption", "ssl/tls", "oauth",
+        "jwt", "saml", "ldap", "active directory", "iam", "zero trust",
+        "soc", "siem", "ids/ips", "firewall", "vpn", "pki"
+    ],
+    "networking": [
+        "tcp/ip", "dns", "dhcp", "http/https", "rest", "soap", "graphql",
+        "websockets", "grpc", "load balancing", "cdn", "api gateway",
+        "microservices", "service mesh", "nginx", "apache", "haproxy"
+    ],
+    "operating_systems": [
+        "linux", "windows", "macos", "ubuntu", "centos", "rhel", "debian",
+        "fedora", "arch", "freebsd", "unix", "windows server", "vmware",
+        "hyper-v", "virtualbox", "proxmox"
+    ],
+    "version_control": [
+        "git", "github", "gitlab", "bitbucket", "svn", "mercurial",
+        "azure repos", "codecommit", "gitflow", "github flow"
+    ],
+    "monitoring_logging": [
+        "prometheus", "grafana", "elk stack", "splunk", "datadog", "new relic",
+        "sentry", "rollbar", "bugsnag", "logstash", "fluentd", "jaeger",
+        "zipkin", "honeycomb", "lightstep"
+    ],
+    "ai_machine_learning": [
+        "machine learning", "deep learning", "neural networks", "nlp",
+        "computer vision", "reinforcement learning", "generative ai",
+        "llm", "transformers", "bert", "gpt", "stable diffusion",
+        "opencv", "spacy", "nltk", "hugging face", "langchain"
+    ],
+    "blockchain": [
+        "blockchain", "ethereum", "bitcoin", "solidity", "smart contracts",
+        "web3", "defi", "nft", "dao", "metamask", "truffle", "hardhat"
+    ],
+    "design_tools": [
+        "figma", "sketch", "adobe xd", "photoshop", "illustrator",
+        "after effects", "premiere pro", "canva", "invision", "zeplin",
+        "principle", "framer", "marvel"
+    ],
+    "business_intelligence": [
+        "tableau", "power bi", "qlik", "looker", "sisense", "pentaho",
+        "cognos", "microstrategy", "domo", "chartio", "metabase"
+    ],
+    "crm_erp": [
+        "salesforce", "hubspot", "dynamics 365", "sap", "oracle erp",
+        "netsuite", "workday", "servicenow", "zendesk", "freshworks"
+    ],
+    "e_commerce": [
+        "shopify", "magento", "woocommerce", "prestashop", "opencart",
+        "bigcommerce", "squarespace", "stripe", "paypal", "square"
+    ]
+}

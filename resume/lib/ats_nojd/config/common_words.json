@@ -1,0 +1,17 @@
+{
+  "common_words": [
+    "the", "and", "or", "but", "so", "because", "while",
+    "to", "from", "in", "on", "at", "with", "for", "of",
+    "a", "an", "is", "are", "was", "were", "be", "being", "been",
+    "I", "you", "me", "we", "they", "them", "he", "she",
+    "that", "this", "these", "those",
+    "it", "its",
+    "as", "by", "if", "then", "there", "here",
+    "my", "your", "our", "their",
+    "very", "just", "really",
+    "can", "could", "should", "would",
+    "has", "have", "had",
+    "does", "do", "did",
+    "not", "no", "yes"
+  ]
+}

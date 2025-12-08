@@ -18,6 +18,8 @@ student_credentials.csv
 venv/
 env/
 .venv/
+.venv2/
+venv2/
 /tmp
 
 # --- Django Specific Files ---

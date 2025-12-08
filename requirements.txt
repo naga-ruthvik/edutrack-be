@@ -42,3 +42,6 @@ tqdm
 tenacity
 playwright
 pypdf
+easyocr
+psycopg2
+whitenoise

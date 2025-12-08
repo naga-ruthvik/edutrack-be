@@ -151,21 +151,112 @@ def calculate_academic_year(date_str: str) -> str:
     return ""
 
 
+def safe_parse_json(text: str) -> dict:
+    """
+    Helper to safely parse JSON from LLM output.
+    Strips markdown code blocks if present.
+    """
+    try:
+        # Strip markdown json ...  if present
+        if "```" in text:
+            # simple split to get content between backticks
+            parts = text.split("```")
+            for part in parts:
+                if part.strip().startswith("json"):
+                    text = part.strip()[4:]
+                    break
+                elif part.strip().startswith("{"):
+                    text = part.strip()
+                    break
+        
+        return json.loads(text.strip())
+    except json.JSONDecodeError:
+        # If strict parsing fails, return raw text or empty dict based on preference
+        return {"_raw_text": text}
+
+def call_llm_extract_local(prompt: str) -> dict:
+    # ---------------------------------------------------------
+    # CONFIGURATION: Update this URL when you restart Ngrok
+    # ---------------------------------------------------------
+    NGROK_BASE_URL = "http://localhost:11434/" 
+    MODEL_NAME = "gpt-oss:20b"
+    # ---------------------------------------------------------
+
+    try:
+        # 1. Construct Endpoint
+        # Remove trailing slash if accidentally added, append chat API endpoint
+        api_url = f"{NGROK_BASE_URL.rstrip('/')}/api/chat"
+
+        # 2. Construct Payload
+        # We use 'format': 'json' to force Ollama to adhere to JSON structure
+        payload = {
+            "model": MODEL_NAME,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Return only valid JSON. No explanations."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "stream": False,  # Get full response at once
+            "format": "json", # Enforce JSON mode (Ollama feature)
+            "options": {
+                "temperature": 0, # Deterministic (0 is best for extraction)
+                "num_ctx": 4096   # Context window size
+            }
+        }
+
+        # 3. Prepare Headers
+        # 'ngrok-skip-browser-warning' is REQUIRED for free Ngrok accounts
+        # otherwise requests returns an HTML warning page instead of JSON.
+        headers = {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true" 
+        }
+
+        # 4. Execute Request
+        # We use a timeout to prevent hanging if the local LLM is stuck
+        response = requests.post(api_url, json=payload, headers=headers, timeout=120)
+        
+        # Check for HTTP errors (404, 500, etc)
+        if response.status_code != 200:
+            logger.error(f"[ERROR] HTTP {response.status_code}: {response.text}")
+            print(f"[ERROR] HTTP {response.status_code}: {response.text}")
+            return {}
+
+        # 5. Parse Response
+        result_json = response.json()
+        
+        # Ollama returns content nested in 'message' -> 'content'
+        content_text = result_json.get("message", {}).get("content", "")
+
+        parsed = safe_parse_json(content_text)
+        
+        if not isinstance(parsed, dict):
+            logger.warning(f"[WARN] LLM returned JSON that is not an object; parsed type: {type(parsed)}")
+            print("[WARN] LLM returned JSON that is not an object; parsed type:", type(parsed))
+            return {"_raw_parsed": parsed}
+            
+        return parsed
+
+    except requests.exceptions.ConnectionError:
+        logger.error(f"[ERROR] Could not connect to {NGROK_BASE_URL}. Is Ngrok running?")
+        print(f"[ERROR] Could not connect to {NGROK_BASE_URL}. Is Ngrok running?")
+        return {}
+    except Exception as e:
+        logger.error(f"[ERROR] call_llm_extract_local failed: {e}")
+        print("[ERROR] call_llm_extract_local failed:", e)
+        # traceback.print_exc() # traceback not imported, relying on logger
+        return {}
+
+
 def extract_metadata_with_llm(pdf_text: str) -> dict:
     """
-    Use LLM to extract category, level, rank, skills, and summary from certificate text.
+    Use Local LLM (Ollama) to extract category, level, rank, skills, and summary from certificate text.
     """
-    import google.generativeai as genai
-    from dotenv import load_dotenv
-    
-    load_dotenv()
-    api_key = os.getenv("CERTIFICATE_VERIFICATION_API_KEY")
-    
-    if not api_key:
-        logger.warning("No API key found for metadata extraction")
-        return {}
-    
-    genai.configure(api_key=api_key)
     
     prompt = f"""Extract the following information from this certificate text.
 
@@ -213,22 +304,23 @@ Return ONLY a JSON object:
 """
     
     try:
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
-            system_instruction="Extract structured data from certificates. Return only valid JSON."
-        )
-        
-        response = model.generate_content(
-            prompt,
-            generation_config={
-                "response_mime_type": "application/json",
-                "temperature": 0.1
-            }
-        )
-        
-        metadata = json.loads(response.text)
+        metadata = call_llm_extract_local(prompt)
         logger.info(f"Extracted metadata: {metadata}")
-        return metadata
+        
+        # Merge with default structure to ensure all keys exist if LLM missed some
+        defaults = {
+            "category": "OTHER",
+            "level": "COLLEGE",
+            "rank": "PARTICIPATION",
+            "skills": [],
+            "summary": "Certificate verification completed"
+        }
+        # Python 3.9+ dictionary merge (defaults | metadata), but sticking to update for compatibility
+        final_meta = defaults.copy()
+        if isinstance(metadata, dict):
+            final_meta.update(metadata)
+            
+        return final_meta
         
     except Exception as e:
         logger.error(f"LLM metadata extraction failed: {e}")
@@ -409,6 +501,7 @@ def verify_certificate(file_input: Union[str, BinaryIO], user_provided_url: str 
             "ai_summary": metadata.get("summary", "Certificate processed"),
             "status": final_status,
             "rejection_reason": rejection_reason,
+            "reason": rejection_reason or qr_result.get("reason"), # Generic reason field
             "skills": metadata.get("skills", [])
         }
         

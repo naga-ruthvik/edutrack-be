@@ -22,7 +22,7 @@ from django.db.models import Sum
 
 
 # Permissions
-from authentication.permissions import IsInstitutionAdmin, IsFaculty, IsStudent # Assuming you created these
+from authentication.permissions import IsInstitutionAdmin, IsFaculty, IsStudent, IsRecruiter # Assuming you created these
 
 # Serializers
 from .serializers import (
@@ -47,7 +47,7 @@ class InstitutionStudentsAPIView(ListAPIView):
     Lists all students in the CURRENT tenant.
     No mixin needed. Schema handles isolation.
     """
-    permission_classes = [IsAuthenticated, IsInstitutionAdmin]
+    permission_classes = [IsAuthenticated, IsInstitutionAdmin, IsRecruiter]
     # Serializer needed for response (you can reuse the one from users app)
     from authentication.serializers import StudentProfileSerializer 
     serializer_class = StudentProfileSerializer
@@ -379,4 +379,29 @@ class StudentDetailsAPIView(RetrieveAPIView):
     def get_queryset(self):
         return StudentProfile.objects.filter(user=self.request.user)
 
-
+@permission_classes([IsAuthenticated,IsStudent])
+@api_view(['GET'])
+def get_student_achievements(request):
+    student_gpa=StudentProfile.objects.get(user=request.user).roll_number
+    student_certificates=Certificate.objects.count()
+    student=request.user.student_profile
+    # student_projects=Project.objects.count()
+    student_moocs=Certificate.objects.filter(student=student,category='MOOC').count()
+    sports_certificates=Certificate.objects.filter(student=student,category='SPORTS').count()
+    extension_certificates=Certificate.objects.filter(student=student,category='EXTENSION').count()
+    internship_certificates=Certificate.objects.filter(student=student,category='INTERNSHIP').count()
+    project_certificates=Certificate.objects.filter(student=student,category='PROJECT').count()
+    technical_certificates=Certificate.objects.filter(student=student,category='TECHNICAL').count()
+    research_certificates=Certificate.objects.filter(student=student,category='RESEARCH').count()
+    other_certificates=Certificate.objects.filter(student=student,category='OTHER').count()
+    certificates_data={
+        "mooc":student_moocs,
+        "sports":sports_certificates,
+        "extension":extension_certificates,
+        "internship":internship_certificates,
+        "project":project_certificates,
+        "technical":technical_certificates,
+        "research":research_certificates,
+        "other":other_certificates
+    }
+    return Response({"gpa": student_gpa,"certificates":certificates_data})

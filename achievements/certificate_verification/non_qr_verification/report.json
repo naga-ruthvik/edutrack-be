@@ -1,0 +1,356 @@
+{
+  "certificate": "C:\\Users\\bhara\\Downloads\\f3.pdf",
+  "final_score": 31.2,
+  "final_verdict": "FAKE",
+  "overall_reason": "No strong authenticity markers detected. Potential tampering found in: metadata_check Multiple modules reported suspicious behaviour.",
+  "weights": {
+    "color_check": 4.545454545454546,
+    "ela_check": 4.545454545454546,
+    "logo_check": 4.545454545454546,
+    "metadata_check": 50.0,
+    "name_check": 4.545454545454546,
+    "phash_check": 4.545454545454546,
+    "signature": 4.545454545454546,
+    "signature_check": 4.545454545454546,
+    "signature_image_check": 4.545454545454546,
+    "ssim_check": 4.545454545454546,
+    "text_check": 4.545454545454546,
+    "visual_fingerprint_check": 4.545454545454546
+  },
+  "modules": {
+    "color_check": {
+      "raw": {
+        "verdict": "ORIGINAL",
+        "delta_e": 8.660851502665148,
+        "brand_detected": "Microsoft",
+        "dominant_colors": [
+          [
+            180,
+            127,
+            53
+          ],
+          [
+            25,
+            37,
+            168
+          ],
+          [
+            48,
+            34,
+            32
+          ],
+          [
+            254,
+            254,
+            255
+          ],
+          [
+            178,
+            212,
+            241
+          ]
+        ]
+      },
+      "score": 100,
+      "verdict": "ORIGINAL",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 4.545
+    },
+    "ela_check": {
+      "raw": {
+        "verdict": "LIKELY_ORIGINAL",
+        "score": 85,
+        "ela_stats": {
+          "mean_ela": 0.12587869234395715,
+          "std_ela": 0.6588618314717573,
+          "high_ratio": 0.0,
+          "high_threshold": 40.0
+        },
+        "reasons": [
+          "Very low ELA variations \u2014 no visible tampering.",
+          "mean_ela=0.13",
+          "high_ratio=0.0000"
+        ]
+      },
+      "score": 85.0,
+      "verdict": "LIKELY_ORIGINAL",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 3.864
+    },
+    "logo_check": {
+      "raw": {
+        "candidates": [
+          {
+            "image": "auto_logos\\logo_1_2_crop.png",
+            "result": {
+              "verdict": "UNKNOWN",
+              "confidence": 10,
+              "reason": "The image shows a gray shape with rounded corners, which is not enough to identify it as any known logo."
+            }
+          },
+          {
+            "image": "auto_logos\\logo_1_3_crop.png",
+            "result": {
+              "verdict": "UNKNOWN",
+              "confidence": 10,
+              "reason": "The image shows text labels within boxes, which is insufficient to classify as an official logo without knowing the institution. No official logo can be verified based on this image alone."
+            }
+          },
+          {
+            "image": "auto_logos\\logo_1_4_crop.png",
+            "result": {
+              "verdict": "UNKNOWN",
+              "confidence": 20,
+              "reason": "The logo appears to be a stylized wordmark, but I lack the necessary information to determine the associated institution and its official branding. Without additional context, it is impossible to confirm its authenticity."
+            }
+          },
+          {
+            "image": "auto_logos\\logo_1_5_crop.png",
+            "result": {
+              "verdict": "UNKNOWN",
+              "confidence": 10,
+              "reason": "The image appears to be a signature, not a logo. Without knowing the context of the certificate and the signatory's name, it is impossible to determine its authenticity."
+            }
+          },
+          {
+            "image": "auto_logos\\logo_1_6_crop.png",
+            "result": {
+              "verdict": "OFFICIAL",
+              "confidence": 95,
+              "reason": "The logo matches the official branding of the Indian Institute of Technology Madras, with correct colors, text, and emblem."
+            }
+          },
+          {
+            "image": "auto_logos\\logo_1_7_crop.png",
+            "result": {
+              "verdict": "UNKNOWN",
+              "confidence": 10,
+              "reason": "This is a QR code, not a certificate logo. Cannot determine authenticity in relation to a certificate."
+            }
+          },
+          {
+            "image": "auto_logos\\logo_1_8_crop.png",
+            "result": {
+              "verdict": "UNKNOWN",
+              "confidence": 100,
+              "reason": "The image does not contain a logo."
+            }
+          }
+        ]
+      },
+      "score": 50.0,
+      "verdict": "",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.273
+    },
+    "metadata_check": {
+      "raw": {
+        "verdict": "FAKE",
+        "final_score": 0,
+        "metadata_check": {
+          "score": 0,
+          "producer": "",
+          "creator": "",
+          "metadata_raw": {
+            "format": "PDF 1.6",
+            "title": "",
+            "author": "",
+            "subject": "",
+            "keywords": "",
+            "creator": "",
+            "producer": "",
+            "creationdate": "",
+            "moddate": "",
+            "trapped": "",
+            "encryption": null
+          },
+          "reasons": [
+            "Producer metadata missing (often in edited files)."
+          ]
+        }
+      },
+      "score": 0,
+      "verdict": "FAKE",
+      "weight": 50.0,
+      "weighted_contribution": 0.0
+    },
+    "name_check": {
+      "raw": {
+        "verdict": "SUSPICIOUS",
+        "final_score": 69.5,
+        "components": {
+          "font_score": 90,
+          "spell_score": 20,
+          "keyword_score": 75,
+          "marks_score": 90,
+          "alignment_score": 95
+        },
+        "reasons": [
+          "Font consistency normal",
+          "Text alignment normal",
+          "20 suspected spelling anomalies",
+          "3 required keywords found"
+        ],
+        "marks_detected": [
+          "17.71/25",
+          "39.38/75"
+        ],
+        "text_preview": "nptel online certification (funded by the moe, govt  of india) skill india ap1t !ra - grrt hra this certifcate is awarded to naga ruthvik for successfully completing the course programming data struct"
+      },
+      "score": 69.5,
+      "verdict": "SUSPICIOUS",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 3.159
+    },
+    "phash_check": {
+      "raw": {
+        "verdict": "NO_DB",
+        "reason": "No reference files found in database folder.",
+        "uploaded_file": "f3.pdf",
+        "uploaded_phash": "d6f608af298a57d0",
+        "best_match": null,
+        "all_matches": [],
+        "thresholds": {
+          "exact_threshold": 5,
+          "likely_threshold": 12,
+          "hash_size": 8,
+          "max_distance": 64
+        }
+      },
+      "score": 50.0,
+      "verdict": "NO_DB",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.273
+    },
+    "signature": {
+      "raw": {
+        "verdict": "NOT_FOUND",
+        "reason": "Signature region not detected in certificate."
+      },
+      "score": 50.0,
+      "verdict": "UNKNOWN",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.273
+    },
+    "signature_check": {
+      "raw": {
+        "verdict": "UNCERTAIN",
+        "final_score": 50,
+        "risk_level": "MEDIUM",
+        "signature_info": {
+          "has_signature": false,
+          "markers_found": {
+            "/Sig": 0,
+            "/ByteRange": 0,
+            "/Contents": 0
+          },
+          "raw_trailer_length": 150
+        },
+        "structure_info": {
+          "startxref_count": 1,
+          "xref_count": 1,
+          "obj_count": 34,
+          "trailer_count": 0,
+          "prev_count": 0,
+          "incremental_updates": false,
+          "structural_flags": []
+        },
+        "metadata_info": {
+          "producer": "",
+          "creator": "",
+          "raw_metadata": {}
+        },
+        "software_classification": {
+          "suspicious": false,
+          "suspicious_keywords": [],
+          "trusted": false,
+          "trusted_keywords": []
+        },
+        "reasons": [
+          "No digital signature markers found (normal for many real certificates)."
+        ]
+      },
+      "score": 50.0,
+      "verdict": "UNCERTAIN",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.273
+    },
+    "signature_image_check": {
+      "raw": {
+        "verdict": "UNCERTAIN",
+        "confidence": 0.6,
+        "reason": "Moderate signature variation"
+      },
+      "score": 60.0,
+      "verdict": "UNCERTAIN",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.727
+    },
+    "ssim_check": {
+      "raw": {
+        "verdict": "SUSPICIOUS",
+        "score": 60.0,
+        "laplacian_variance": 1170.5750190776291,
+        "noise_residual": 7.860928058624268,
+        "edge_inconsistency": 6.509984343158209,
+        "reasons": [
+          "Strong edge inconsistencies \u2192 pasted objects/text."
+        ]
+      },
+      "score": 60.0,
+      "verdict": "SUSPICIOUS",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.727
+    },
+    "text_check": {
+      "raw": {
+        "final_verdict": "UNCERTAIN",
+        "final_score": 62.0,
+        "heuristic": {
+          "heuristic_score": 65,
+          "real_keyword_hits": [
+            "certificate",
+            "course",
+            "credits"
+          ],
+          "suspicious_keyword_hits": [],
+          "unique_names": [
+            "Roll No",
+            "Data  Structures"
+          ],
+          "text_length": 220,
+          "reasons": [
+            "Found 3 certificate keywords.",
+            "Found 0 suspicious keywords.",
+            "Detected 2 names.",
+            "Noise patterns detected: 0"
+          ]
+        },
+        "ai_semantic": {
+          "verdict": "UNCERTAIN",
+          "confidence": 60,
+          "reasons": [
+            "Incomplete information, lacks the issuing institution name (e.g., NPTEL)",
+            "Format appears slightly unconventional for a standard certificate but contains potentially valid data points (Roll No, course name).",
+            "Final line seems like an artifact."
+          ]
+        }
+      },
+      "score": 62.0,
+      "verdict": "UNCERTAIN",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.818
+    },
+    "visual_fingerprint_check": {
+      "raw": {
+        "binary_hash": "b1699615cfe8a62e8b3415114a3deff9fbaf8ea1764064b5c3f4c1feccfb8573",
+        "canonical_hash": "5fb9d8c597f1901c1a25bafb669d801c44a9f72a83d5426c30e22f0e099c3e33",
+        "phash": "d6f608af298a57d0"
+      },
+      "score": 50.0,
+      "verdict": "",
+      "weight": 4.545454545454546,
+      "weighted_contribution": 2.273
+    }
+  }
+}
