@@ -10,6 +10,7 @@ from authentication.permissions import IsStudent
 from .models import Resume
 from resume.services.resume_analyzer import analyze_resume
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
 
 class GenerateResumeAPIView(generics.GenericAPIView):
     serializer_class = ResumeSerializer
@@ -139,3 +140,10 @@ class ListResumeAPIView(generics.ListAPIView):
     serializer_class = ResumeSerializer
     def get_queryset(self):
         return Resume.objects.filter(student=self.request.user.student_profile)
+
+@permission_classes([IsAuthenticated, IsStudent])
+@api_view(['GET'])
+def list_student_data(request):
+    student = request.user
+    data = generate_student_details(student)
+    return Response(data)

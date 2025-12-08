@@ -411,7 +411,7 @@ def convert_to_target_format(raw: dict) -> dict:
 # ======================================================
 def create_resume_from_string(resume_text: str, job_description: str = "") -> str:
     try:
-        raw_result = call_llm_extract(build_extraction_prompt(resume_text, job_description))
+        raw_result = call_llm_extract_local(build_extraction_prompt(resume_text, job_description))
         if not raw_result:
             print("[WARN] LLM returned empty result; proceeding with defaults.")
         final_result = convert_to_target_format(raw_result or {})
@@ -548,3 +548,98 @@ def create_resume_from_string(resume_text: str, job_description: str = "") -> st
 #             f.write(minified_json)
 #         print(f"[INFO] Saved minified JSON for resume {idx}: {filename}")
 #         print(minified_json)  # one-line JSON
+
+import json
+import traceback
+import requests
+from typing import Dict, Any
+
+def safe_parse_json(text: str) -> Dict[str, Any]:
+    """
+    Helper to safely parse JSON from LLM output.
+    Strips markdown code blocks if present.
+    """
+    try:
+        # Strip markdown json ...  if present
+        if "" in text:
+            text = text.split("")[1]
+            if text.startswith("json"):
+                text = text[4:]
+        return json.loads(text.strip())
+    except json.JSONDecodeError:
+        # If strict parsing fails, return raw text or empty dict based on preference
+        return {"_raw_text": text}
+
+def call_llm_extract_local(prompt: str) -> dict:
+    # ---------------------------------------------------------
+    # CONFIGURATION: Update this URL when you restart Ngrok
+    # ---------------------------------------------------------
+    NGROK_BASE_URL = "http://localhost:11434/" 
+    MODEL_NAME = "gpt-oss:20b"
+    # ---------------------------------------------------------
+
+    try:
+        # 1. Construct Endpoint
+        # Remove trailing slash if accidentally added, append chat API endpoint
+        api_url = f"{NGROK_BASE_URL.rstrip('/')}/api/chat"
+
+        # 2. Construct Payload
+        # We use 'format': 'json' to force Ollama to adhere to JSON structure
+        payload = {
+            "model": MODEL_NAME,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Return only valid JSON. No explanations."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "stream": False,  # Get full response at once
+            "format": "json", # Enforce JSON mode (Ollama feature)
+            "options": {
+                "temperature": 0, # Deterministic (0 is best for extraction)
+                "num_ctx": 4096   # Context window size
+            }
+        }
+
+        # 3. Prepare Headers
+        # 'ngrok-skip-browser-warning' is REQUIRED for free Ngrok accounts
+        # otherwise requests returns an HTML warning page instead of JSON.
+        headers = {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true" 
+        }
+
+        # 4. Execute Request
+        # We use a timeout to prevent hanging if the local LLM is stuck
+        response = requests.post(api_url, json=payload, headers=headers, timeout=120)
+        
+        # Check for HTTP errors (404, 500, etc)
+        if response.status_code != 200:
+            print(f"[ERROR] HTTP {response.status_code}: {response.text}")
+            return {}
+
+        # 5. Parse Response
+        result_json = response.json()
+        
+        # Ollama returns content nested in 'message' -> 'content'
+        content_text = result_json.get("message", {}).get("content", "")
+
+        parsed = safe_parse_json(content_text)
+        
+        if not isinstance(parsed, dict):
+            print("[WARN] LLM returned JSON that is not an object; parsed type:", type(parsed))
+            return {"_raw_parsed": parsed}
+            
+        return parsed
+
+    except requests.exceptions.ConnectionError:
+        print(f"[ERROR] Could not connect to {NGROK_BASE_URL}. Is Ngrok running?")
+        return {}
+    except Exception as e:
+        print("[ERROR] call_llm_extract_local failed:", e)
+        traceback.print_exc()
+        return {}
