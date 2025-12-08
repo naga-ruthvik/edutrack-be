@@ -6,5 +6,5 @@ urlpatterns = [
     path('analyze/', AnalyzeResumeAPIView.as_view(), name='analyze-resume'),
     path('resume/<int:resume_id>/', ResumeAPIView.as_view(), name='resume'),
     path('resume/', ListResumeAPIView.as_view(), name='list-resume'),
-    path('student/data/', get_student_data, name='list-student-data'),
+    path('student/data/', get_student_data, name='get-student-data'),
 ]
