@@ -143,7 +143,7 @@ class ListResumeAPIView(generics.ListAPIView):
 
 @permission_classes([IsAuthenticated, IsStudent])
 @api_view(['GET'])
-def list_student_data(request):
+def get_student_data(request):
     student = request.user
     data = generate_student_details(student)
     return Response(data)
