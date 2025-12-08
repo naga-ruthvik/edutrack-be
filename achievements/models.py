@@ -121,6 +121,7 @@ class Certificate(models.Model):
     # --- AI CONTEXT & SCORING ---
     # A rich summary written by the AI for your Chatbot/RAG system.
     ai_summary = models.TextField(blank=True, help_text="Short summary for Chatbot context.")
+    reason = models.TextField(blank=True, null=True, help_text="Verification reason or rejection cause.")
     ocr_text = models.TextField(blank=True, null=True)
     
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)

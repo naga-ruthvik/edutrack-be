@@ -20,16 +20,30 @@ def process_certificate_verification(file_path, certificate_id, schema_name="pub
             
             # Update your model with results
             cert = Certificate.objects.get(id=certificate_id)
-            cert.verification_status = result["unified_output"]["status"]
+            final_verdict = result["unified_output"]["status"]
+            if final_verdict == "verified":
+                cert.status = Certificate.Status.AI_VERIFIED
+            else:
+                cert.status = Certificate.Status.NEEDS_REVIEW
             cert.title = result["unified_output"]["title"]
             cert.issuing_organization = result["unified_output"]["issuing_organization"]
             cert.verification_url = result["unified_output"]["verification_url"]
             cert.category = result["unified_output"]["category"]
             cert.level = result["unified_output"]["level"]
             cert.rank = result["unified_output"]["rank"]
-            cert.date_of_event = result["unified_output"]["date_of_event"]
+            # Parse date if possible
+            date_str = result["unified_output"]["date_of_event"]
+            parsed_date = None
+            if date_str:
+                from dateutil import parser
+                try:
+                    parsed_date = parser.parse(date_str).date()
+                except:
+                    parsed_date = None
+            cert.date_of_event = parsed_date
             cert.academic_year = result["unified_output"]["academic_year"] or ""
             cert.ai_summary = result["unified_output"]["ai_summary"]
+            cert.reason = result["unified_output"].get("reason")
             
             # Save rejection reason if present
             if result.get("unified_output", {}).get("rejection_reason"):
@@ -39,8 +53,18 @@ def process_certificate_verification(file_path, certificate_id, schema_name="pub
 
             skills = result["unified_output"]["skills"]
             for skill_name in skills:
-                # Get or create skill, handling case insensitivity preferred
-                skill_obj, _ = Skill.objects.get_or_create(name=skill_name.lower())
+                try:
+                    # Get or create skill, handling case insensitivity preferred
+                    skill_obj, _ = Skill.objects.get_or_create(name=skill_name.lower())
+                except Exception:
+                    # Handle race condition or IntegrityError
+                    try:
+                        skill_obj = Skill.objects.get(name=skill_name.lower())
+                    except Skill.DoesNotExist:
+                        # Should not happen if get_or_create failed due to integrity error
+                        # but safe fallback
+                        continue
+                
                 cert.secondary_skills.add(skill_obj)
                 
             cert.verification_data = result

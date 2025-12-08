@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CertificateUploadSerializer, CertificateListSerializer, CertificateVerificationSerializer
 from rest_framework.response import Response
@@ -13,8 +13,11 @@ from utils.generate_presigned_url import generate_presigned_url  # Import
 from authentication.models import User
 from .models import Certificate
 
+from rest_framework.parsers import MultiPartParser, FormParser
+
 class CertificateUploadAPIView(GenericAPIView):
     permission_classes = [IsAuthenticated, IsStudent]
+    parser_classes = [MultiPartParser, FormParser]
     serializer_class = CertificateUploadSerializer
 
     def post(self, request, *args, **kwargs):
@@ -109,3 +112,10 @@ def verify_certificates(request, pk):
              return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
              
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CertificateRetrieveAPIView(RetrieveAPIView):
+    serializer_class = CertificateListSerializer
+    lookup_field = "pk"
+    permission_classes=[IsAuthenticated]
+    def get_object(self):
+        return Certificate.objects.get(id=self.kwargs["pk"])

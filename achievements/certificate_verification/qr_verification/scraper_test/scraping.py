@@ -186,17 +186,54 @@ def ensure_pdf(url: str, download_dir: pathlib.Path) -> pathlib.Path:
         filename = filename + ext
     return save_binary(resp.content, filename, download_dir)
 
+import fitz  # PyMuPDF
+import easyocr
+import io
+import numpy as np
+from PIL import Image
+
 def pdf_to_text(pdf_path: pathlib.Path) -> str:
+    """
+    Extracts text from a PDF file.
+    1. Tries direct text extraction using PyMuPDF (fitz).
+    2. If text is sparse (< 50 chars), falls back to OCR using EasyOCR.
+    """
     text_parts = []
     try:
-        reader = PdfReader(str(pdf_path))
-        for page in reader.pages:
-            text_parts.append(page.extract_text() or "")
+        doc = fitz.open(str(pdf_path))
+        
+        # 1. Try Direct Text Extraction
+        for page in doc:
+            text_parts.append(page.get_text())
+        
+        raw_text = "\n".join(text_parts).strip()
+        
+        # 2. Check if OCR is needed (if text is too short or empty)
+        if len(raw_text) < 50:
+            logger.info(f"PDF text sparse ({len(raw_text)} chars). Attempting OCR with EasyOCR...")
+            ocr_text_parts = []
+            reader = easyocr.Reader(['en'], gpu=False) # GPU=False for compatibility
+            
+            for i, page in enumerate(doc):
+                # Render page to image (pixmap)
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2)) # 2x zoom for better OCR
+                img_data = pix.tobytes("png")
+                
+                # EasyOCR implementation
+                result = reader.readtext(img_data, detail=0) # returns list of strings
+                page_text = " ".join(result)
+                ocr_text_parts.append(page_text)
+                logger.debug(f"OCR Page {i+1}: Found {len(page_text)} chars")
+                
+            raw_text = "\n".join(ocr_text_parts).strip()
+            
+        doc.close()
+            
     except Exception as e:
-        text_parts.append(f"[PDF parse error: {e}]")
-    text = "\n".join(text_parts).strip()
-    # If empty (scanned PDFs), consider OCR fallback (pytesseract + pdf2image)
-    final_text = text or "[Empty or scanned PDF without text layer]"
+        logger.error(f"pdf_to_text failed: {e}")
+        return f"[PDF parse error: {e}]"
+        
+    final_text = raw_text or "[Empty or scanned PDF without text layer]"
     logger.info(f"PDF Text Extracted ({len(final_text)} chars). Preview: {final_text[:200]}...")
     return final_text
 
@@ -431,72 +468,128 @@ Scraped Website Text:
 
 
 
+def safe_parse_json(text: str) -> dict:
+    """
+    Helper to safely parse JSON from LLM output.
+    Strips markdown code blocks if present.
+    """
+    try:
+        # Strip markdown json ...  if present
+        if "```" in text:
+            # simple split to get content between backticks
+            parts = text.split("```")
+            for part in parts:
+                if part.strip().startswith("json"):
+                    text = part.strip()[4:]
+                    break
+                elif part.strip().startswith("{"):
+                    text = part.strip()
+                    break
+        
+        return json.loads(text.strip())
+    except json.JSONDecodeError:
+        # If strict parsing fails, return raw text or empty dict based on preference
+        return {"_raw_text": text}
+
+def call_llm_extract_local(prompt: str) -> dict:
+    # ---------------------------------------------------------
+    # CONFIGURATION: Update this URL when you restart Ngrok
+    # ---------------------------------------------------------
+    NGROK_BASE_URL = "http://localhost:11434/" 
+    MODEL_NAME = "gpt-oss:20b"
+    # ---------------------------------------------------------
+
+    try:
+        # 1. Construct Endpoint
+        # Remove trailing slash if accidentally added, append chat API endpoint
+        api_url = f"{NGROK_BASE_URL.rstrip('/')}/api/chat"
+
+        # 2. Construct Payload
+        # We use 'format': 'json' to force Ollama to adhere to JSON structure
+        payload = {
+            "model": MODEL_NAME,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Return only valid JSON. No explanations."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "stream": False,  # Get full response at once
+            "format": "json", # Enforce JSON mode (Ollama feature)
+            "options": {
+                "temperature": 0, # Deterministic (0 is best for extraction)
+                "num_ctx": 4096   # Context window size
+            }
+        }
+
+        # 3. Prepare Headers
+        # 'ngrok-skip-browser-warning' is REQUIRED for free Ngrok accounts
+        # otherwise requests returns an HTML warning page instead of JSON.
+        headers = {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true" 
+        }
+
+        # 4. Execute Request
+        # We use a timeout to prevent hanging if the local LLM is stuck
+        response = requests.post(api_url, json=payload, headers=headers, timeout=120)
+        
+        # Check for HTTP errors (404, 500, etc)
+        if response.status_code != 200:
+            logger.error(f"[ERROR] HTTP {response.status_code}: {response.text}")
+            print(f"[ERROR] HTTP {response.status_code}: {response.text}")
+            return {}
+
+        # 5. Parse Response
+        result_json = response.json()
+        
+        # Ollama returns content nested in 'message' -> 'content'
+        content_text = result_json.get("message", {}).get("content", "")
+
+        parsed = safe_parse_json(content_text)
+        
+        if not isinstance(parsed, dict):
+            logger.warning(f"[WARN] LLM returned JSON that is not an object; parsed type: {type(parsed)}")
+            print("[WARN] LLM returned JSON that is not an object; parsed type:", type(parsed))
+            return {"_raw_parsed": parsed}
+            
+        return parsed
+
+    except requests.exceptions.ConnectionError:
+        logger.error(f"[ERROR] Could not connect to {NGROK_BASE_URL}. Is Ngrok running?")
+        print(f"[ERROR] Could not connect to {NGROK_BASE_URL}. Is Ngrok running?")
+        return {}
+    except Exception as e:
+        logger.error(f"[ERROR] call_llm_extract_local failed: {e}")
+        print("[ERROR] call_llm_extract_local failed:", e)
+        return {}
+
 def call_llm_extract(prompt: str) -> Dict:
     """
-    Example with OpenAI-compatible clients. Replace with preferred LLM provider.
+    Replaces Google GenAI call with Local LLM (Ollama) call.
     """
-    """
-    Sends a prompt to the Gemini API and gets a JSON response.
-    """
-    import google.generativeai as genai
-    genai.configure(api_key=CERTIFICATE_VERIFICATION_API_KEY)
-
-    model = genai.GenerativeModel(
-        # Use Gemini 1.5 Pro (free tier, much more capable than Flash)
-        model_name="gemini-2.5-flash",
-        system_instruction="""You are a certificate verification expert specializing in NPTEL certificates.
-        
-EXTRACTION RULES:
-        1. For NPTEL website data, names appear as UPPERCASE text (e.g., 'NAGA RUTHVIK') near scores/IDs
-        2. Extract data EXACTLY as written - do not copy between PDF and Website sections
-        3. If a field is missing, return null - DO NOT guess or copy from other source
-        4. Return ONLY valid JSON with no additional text
-        """
-        )
-
-    # 2. `temperature` and `response_format` are set in `generation_config`.
-    generation_config = {
-        "temperature": 0,
-        "response_mime_type": "application/json",
-        "temperature": 0.0,
-        "top_p": 0.9,
-        "top_k": 5,           
-        "max_output_tokens": 1000,
-        "candidate_count": 1
-
-    }
-    
-    # 3. Configure safety settings to be less restrictive
-    safety_settings = [
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
-    ]
-
-    # 4. The API call with safety settings
     logger.debug(f"--- LLM PROMPT START ---\n{prompt}\n--- LLM PROMPT END ---")
-    response = model.generate_content(
-        prompt,
-        generation_config=generation_config,
-        safety_settings=safety_settings
-    )
-
-    # 4. Handle blocked responses (safety filter, etc)
-    try:
-        raw_json_text = response.text
-        return json.loads(raw_json_text)
-    except ValueError as e:
-        # Model was blocked (safety filter, recitation, etc)
-        logger.error(f"Gemini blocked response. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'UNKNOWN'}")
-        # Return minimal valid structure
-        return {
-            "parsed_pdf_data": {"name": None, "course": None, "issuer": None, "date": None, "certificate_id": None},
-            "parsed_site_data": {"name": None, "course": None, "issuer": None, "date": None, "certificate_id": None},
-            "verified": False,
-            "score": 0.0,
-            "reason": f"LLM response blocked (safety filter). Finish reason: {response.candidates[0].finish_reason if response.candidates else 'UNKNOWN'}"
-        }
+    
+    result = call_llm_extract_local(prompt)
+    
+    # Handle the case where local LLM fails or returns empty
+    if not result or "_raw_parsed" in result:
+        # Return fallback structure as expected by the caller if possible, 
+        # or just the empty/error result. The original code returned a fallback on block.
+        if not result:
+             return {
+                "parsed_pdf_data": {"name": None, "course": None, "issuer": None, "date": None, "certificate_id": None},
+                "parsed_site_data": {"name": None, "course": None, "issuer": None, "date": None, "certificate_id": None},
+                "verified": False,
+                "score": 0.0,
+                "reason": "Local LLM request failed or returned invalid JSON."
+            }
+    
+    return result
 
 import json
 from pprint import pprint
