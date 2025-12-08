@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
-from .serializers import CertificateUploadSerializer, CertificateListSerializer
+from .serializers import CertificateUploadSerializer, CertificateListSerializer, CertificateVerificationSerializer
 from rest_framework.response import Response
 from .tasks import process_certificate_verification
 # Create your views here.
 from django.db import transaction, connection
 from rest_framework import status
-from authentication.permissions import IsStudent
+from authentication.permissions import IsStudent, IsFaculty
 from rest_framework.decorators import permission_classes, api_view
 from utils.generate_presigned_url import generate_presigned_url  # Import 
 from authentication.models import User
@@ -84,3 +84,28 @@ def list_certificates(request):
     return Response(serializer.data)
 
 
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated, IsFaculty])
+def verify_certificates(request, pk):
+    serializer = CertificateVerificationSerializer(data=request.data)
+    if serializer.is_valid():
+        new_status = serializer.validated_data['status']
+        
+        try:
+            certificate = Certificate.objects.get(id=pk)
+            
+            # Faculty checks: Must be the mentor of the student
+            if certificate.student.mentor != request.user.faculty_profile:
+                 return Response({"error": "You are not the mentor for this student."}, status=status.HTTP_403_FORBIDDEN)
+
+            certificate.status = new_status
+            certificate.verified_by = request.user.faculty_profile
+            certificate.save()
+            
+            return Response({"status": "Certificate status updated successfully"}, status=status.HTTP_200_OK)
+        except Certificate.DoesNotExist:
+            return Response({"error": "Certificate not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+             
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
