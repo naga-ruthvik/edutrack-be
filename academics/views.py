@@ -372,36 +372,74 @@ class FacultyStudentsAPIView(ListAPIView):
         return StudentProfile.objects.filter(mentor=self.request.user.faculty_profile)
 
 class StudentDetailsAPIView(RetrieveAPIView):
-    permission_classes=[IsStudent]
+    permission_classes=[IsStudent,IsFaculty]
     serializer_class=StudentDetailSerializer
     lookup_field='pk'
 
     def get_queryset(self):
         return StudentProfile.objects.filter(user=self.request.user)
 
-@permission_classes([IsAuthenticated,IsStudent])
+@permission_classes([IsAuthenticated,IsStudent,IsFaculty])
 @api_view(['GET'])
 def get_student_achievements(request):
-    student_gpa=StudentProfile.objects.get(user=request.user).roll_number
-    student_certificates=Certificate.objects.count()
-    student=request.user.student_profile
-    # student_projects=Project.objects.count()
-    student_moocs=Certificate.objects.filter(student=student,category='MOOC').count()
-    sports_certificates=Certificate.objects.filter(student=student,category='SPORTS').count()
-    extension_certificates=Certificate.objects.filter(student=student,category='EXTENSION').count()
-    internship_certificates=Certificate.objects.filter(student=student,category='INTERNSHIP').count()
-    project_certificates=Certificate.objects.filter(student=student,category='PROJECT').count()
-    technical_certificates=Certificate.objects.filter(student=student,category='TECHNICAL').count()
-    research_certificates=Certificate.objects.filter(student=student,category='RESEARCH').count()
-    other_certificates=Certificate.objects.filter(student=student,category='OTHER').count()
-    certificates_data={
-        "mooc":student_moocs,
-        "sports":sports_certificates,
-        "extension":extension_certificates,
-        "internship":internship_certificates,
-        "project":project_certificates,
-        "technical":technical_certificates,
-        "research":research_certificates,
-        "other":other_certificates
-    }
-    return Response({"gpa": student_gpa,"certificates":certificates_data})
+    # print(request.user.role)
+    if request.user.role==User.Role.STUDENT:
+        student_gpa=StudentProfile.objects.get(user=request.user).roll_number
+        student_certificates=Certificate.objects.count()
+        student=request.user.student_profile
+        # student_projects=Project.objects.count()
+        student_moocs=Certificate.objects.filter(student=student,category='MOOC').count()
+        sports_certificates=Certificate.objects.filter(student=student,category='SPORTS').count()
+        extension_certificates=Certificate.objects.filter(student=student,category='EXTENSION').count()
+        internship_certificates=Certificate.objects.filter(student=student,category='INTERNSHIP').count()
+        project_certificates=Certificate.objects.filter(student=student,category='PROJECT').count()
+        technical_certificates=Certificate.objects.filter(student=student,category='TECHNICAL').count()
+        research_certificates=Certificate.objects.filter(student=student,category='RESEARCH').count()
+        other_certificates=Certificate.objects.filter(student=student,category='OTHER').count()
+        certificates_data={
+            "mooc":student_moocs,
+            "sports":sports_certificates,
+            "extension":extension_certificates,
+            "internship":internship_certificates,
+            "project":project_certificates,
+            "technical":technical_certificates,
+            "research":research_certificates,
+            "other":other_certificates
+        }
+        return Response({"gpa": student_gpa,"certificates":certificates_data})
+
+    elif request.user.role==User.Role.FACULTY:
+        faculty = request.user.faculty_profile
+        mentees = faculty.mentees.all()
+        students_data = []
+
+        for student in mentees:
+            student_moocs = Certificate.objects.filter(student=student, category='MOOC').count()
+            sports_certificates = Certificate.objects.filter(student=student, category='SPORTS').count()
+            extension_certificates = Certificate.objects.filter(student=student, category='EXTENSION').count()
+            internship_certificates = Certificate.objects.filter(student=student, category='INTERNSHIP').count()
+            project_certificates = Certificate.objects.filter(student=student, category='PROJECT').count()
+            technical_certificates = Certificate.objects.filter(student=student, category='TECHNICAL').count()
+            research_certificates = Certificate.objects.filter(student=student, category='RESEARCH').count()
+            other_certificates = Certificate.objects.filter(student=student, category='OTHER').count()
+            
+            certificates_data = {
+                "mooc": student_moocs,
+                "sports": sports_certificates,
+                "extension": extension_certificates,
+                "internship": internship_certificates,
+                "project": project_certificates,
+                "technical": technical_certificates,
+                "research": research_certificates,
+                "other": other_certificates
+            }
+            
+            students_data.append({
+                "student_name": student.user.get_full_name(),
+                "roll_number": student.roll_number,
+                "certificates": certificates_data
+            })
+            
+        return Response(students_data)
+
+    return Response({"error": "Invalid Role"}, status=400)

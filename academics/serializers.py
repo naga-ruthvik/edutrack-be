@@ -90,6 +90,12 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     zipcode = serializers.CharField(source='user.zip_code') # Note: model has zip_code
     role = serializers.CharField(source='user.role')
     education=serializers.SerializerMethodField()
+    skills=serializers.SerializerMethodField()
+
+    def get_skills(self,obj):
+        return obj.skills.all().values_list('name', flat=True)
+    
+    
 
     def get_education(self,obj):
         return StudentEducationSerializer(obj.education_history.all(), many=True).data
