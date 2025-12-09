@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+
 class StudentProfile(models.Model):
     """
     Strict Data for Students only.
@@ -27,6 +28,26 @@ class StudentProfile(models.Model):
         null=True,
         related_name='mentees'
     )
+    
+    # ========== NIRF FIELDS ADDED (100% BACKWARD COMPATIBLE) ==========
+    # NIRF OI (10%) + GO (20%) - Diversity & PhD Data
+    state = models.CharField(max_length=50, null=True, blank=True)  # e.g. "Telangana"
+    category = models.CharField(
+        max_length=20, null=True, blank=True, 
+        choices=[
+            ('GEN', 'General'), 
+            ('OBC', 'OBC'), 
+            ('SC', 'SC'), 
+            ('ST', 'ST')
+        ]
+    )
+    gender = models.CharField(
+        max_length=10, null=True, blank=True,
+        choices=[('M', 'Male'), ('F', 'Female'), ('O', 'Other')]
+    )
+    differently_abled = models.BooleanField(default=False, null=True, blank=True)
+    phd_enrolled = models.BooleanField(default=False, null=True, blank=True)
+    # ================================================================
 
     def __str__(self):
         return f"{self.roll_number} - {self.user.get_full_name()}"
@@ -65,6 +86,13 @@ class FacultyProfile(models.Model):
     # Role Flags
     is_hod = models.BooleanField(default=False)
     joining_date = models.DateField(null=True, blank=True)
+    
+    # ========== NIRF FIELDS ADDED (100% BACKWARD COMPATIBLE) ==========
+    # NIRF TLR (30%) + RP (30%) - Faculty Quality Metrics
+    phd_qualification = models.BooleanField(default=False)
+    years_experience = models.PositiveIntegerField(null=True, blank=True)
+    publications_count = models.PositiveIntegerField(default=0)
+    # ================================================================
 
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.get_designation_display()})"
@@ -94,8 +122,10 @@ class Education(models.Model):
     
     passing_year = models.IntegerField()
     
-    # Optional: Upload marks memo if you need proof
-    # proof_file = models.FileField(...)
+    # ========== NIRF FIELD ADDED (OPTIONAL) ==========
+    # NIRF GO - PhD Award Tracking (if applicable)
+    is_phd_awarded = models.BooleanField(default=False, null=True, blank=True)
+    # ================================================
 
     class Meta:
         ordering = ['-passing_year'] # Show latest first

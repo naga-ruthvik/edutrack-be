@@ -1,10 +1,12 @@
-# erp/models.py - MINIMAL NAAC/NIRF Schema (8 Tables)
+# erp/models.py - MINIMAL NAAC/NIRF Schema (8 Tables + NIRF Fields)
 from django.db import models
 from profiles.models import StudentProfile
 from academics.models import Department
 
 
+
 # ==================== CORE ACADEMIC MODELS ====================
+
 
 class Course(models.Model):
     """Academic Program (B.Tech CSE, MBA) - NAAC 2.1.1 Intake"""
@@ -17,11 +19,20 @@ class Course(models.Model):
     intake_capacity = models.PositiveIntegerField(default=60)  # NAAC 2.1.1
     is_active = models.BooleanField(default=True)
     
+    # ========== NIRF TLR FIELD ADDED ==========
+    programme_type = models.CharField(
+        max_length=20, null=True, blank=True, 
+        choices=[('UG','UG'),('PG','PG'),('PhD','PhD')]
+    )
+    sanctioned_intake = models.PositiveIntegerField(null=True, blank=True)  # NIRF NT
+    # =========================================
+    
     class Meta:
         db_table = 'courses'
     
     def __str__(self):
         return f"{self.course_code} - {self.course_name}"
+
 
 
 class Subject(models.Model):
@@ -53,6 +64,7 @@ class Subject(models.Model):
         return f"{self.subject_code} - {self.subject_name}"
 
 
+
 class StudentSubjectEnrollment(models.Model):
     """CRITICAL: Student Enrolment - NAAC 2.1.1 Demand Ratio"""
     enrollment_id = models.AutoField(primary_key=True)
@@ -72,7 +84,9 @@ class StudentSubjectEnrollment(models.Model):
         return f"{self.student.roll_number} → {self.subject.subject_code}"
 
 
+
 # ==================== EXAMS & RESULTS ====================
+
 
 class Exam(models.Model):
     """Exam Types - Links subjects→marks"""
@@ -97,6 +111,7 @@ class Exam(models.Model):
         return f"{self.exam_code} - {self.subject.subject_code}"
 
 
+
 class MarksGrades(models.Model):
     """CRITICAL: Results - NAAC 2.4.1 Pass % (25 Marks!)"""
     marks_id = models.AutoField(primary_key=True)
@@ -108,6 +123,11 @@ class MarksGrades(models.Model):
     is_passed = models.BooleanField(default=False)
     entered_date = models.DateField(auto_now_add=True)
     
+    # ========== NIRF GO FIELDS ADDED ==========
+    academic_year = models.CharField(max_length=20, null=True, blank=True)  # "2023-24"
+    cgpa_equivalent = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)  # 8.75
+    # =========================================
+    
     class Meta:
         db_table = 'marks_grades'
         unique_together = ['student', 'exam']
@@ -117,7 +137,9 @@ class MarksGrades(models.Model):
         return f"{self.student.roll_number} - {self.exam.exam_code}"
 
 
+
 # ==================== PLACEMENTS ====================
+
 
 class PlacementRecords(models.Model):
     """CRITICAL: Placements - NAAC 5.2.2 (30 Marks!)"""
@@ -135,12 +157,18 @@ class PlacementRecords(models.Model):
         ('REJECTED', 'Rejected')
     ])
     
+    # ========== NIRF GO FIELDS ADDED ==========
+    median_salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # NIRF B15
+    programme_level = models.CharField(max_length=20, null=True, blank=True)  # UG/PG/PhD
+    # =========================================
+    
     class Meta:
         db_table = 'placement_records'
         ordering = ['-offer_letter_date']
     
     def __str__(self):
         return f"{self.student.roll_number} - {self.company_name}"
+
 
 
 class PlacementStats(models.Model):
@@ -163,6 +191,7 @@ class PlacementStats(models.Model):
         return f"{self.department.code}-{self.batch_year}: {self.placement_percentage}%"
 
 
+
 class AlumniMaster(models.Model):
     """CRITICAL: Alumni - NAAC 5.3.3 (10 Marks!)"""
     alumni_id = models.AutoField(primary_key=True)
@@ -174,9 +203,50 @@ class AlumniMaster(models.Model):
     contact_email = models.EmailField(blank=True)
     is_active_alumni = models.BooleanField(default=True)
     
+    # ========== NIRF GO FIELDS ADDED ==========
+    higher_studies = models.CharField(max_length=255, null=True, blank=True)  # "M.Tech IIT Delhi"
+    alumni_feedback_score = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)  # 4.2/5
+    # =========================================
+    
     class Meta:
         db_table = 'alumni_master'
         ordering = ['-graduation_year']
     
     def __str__(self):
         return f"{self.student.roll_number} - {self.graduation_year}"
+
+
+
+# erp/models.py - ADD THESE 3 FINAL TABLES
+
+# 1. FINANCIAL RESOURCES (TLR 15% BLOCKER)
+class NirfFinancials(models.Model):
+    financial_year = models.CharField(max_length=9, unique=True)  # '2023-24'
+    capital_expenditure_lakhs = models.DecimalField(max_digits=12, decimal_places=2)  # NIRF B18 ⭐
+    salary_expenditure_lakhs = models.DecimalField(max_digits=12, decimal_places=2)    # NIRF B19 ⭐
+    total_students = models.PositiveIntegerField()
+    total_faculty = models.PositiveIntegerField()
+    
+    class Meta:
+        db_table = 'nirf_financials'
+
+# 2. DIVERSITY METRICS (OI 10% BLOCKER)
+class NirfDiversity(models.Model):
+    category = models.CharField(max_length=20)  # 'sc_st', 'differently_abled', 'sports'
+    count_ug = models.PositiveIntegerField()
+    count_pg = models.PositiveIntegerField()
+    count_phd = models.PositiveIntegerField()
+    academic_year = models.CharField(max_length=9)
+    
+    class Meta:
+        db_table = 'nirf_diversity'
+
+# 3. PERCEPTION SURVEYS (PR 10%)
+class NirfPerception(models.Model):
+    nirf_year = models.IntegerField()
+    employer_score = models.DecimalField(max_digits=5, decimal_places=2)  # 0-100
+    academic_peer_score = models.DecimalField(max_digits=5, decimal_places=2)
+    survey_responses = models.PositiveIntegerField()
+    
+    class Meta:
+        db_table = 'nirf_perception'
