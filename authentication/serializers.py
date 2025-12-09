@@ -13,14 +13,17 @@ class UserCreateSerializer(BaseUserCreateSerializer):
 
 # 2. Serializers for nested Profile Data
 class StudentProfileSerializer(serializers.ModelSerializer):
+    user=BaseUserSerializer()
+    def get_user(self,obj):
+        return BaseUserSerializer(obj.user.id)
     class Meta:
         model = StudentProfile
-        fields = ['roll_number', 'batch_year', 'current_semester', 'department']
+        fields = ['roll_number', 'batch_year', 'current_semester', 'department','user']
 
 class FacultyProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = FacultyProfile
-        fields = ['employee_id', 'designation', 'is_hod', 'department']
+        fields = ['employee_id', 'designation', 'is_hod', 'department','user']
 
 # 3. Serializer for Viewing Current User (GET /users/me/)
 class CurrentUserSerializer(BaseUserSerializer):
