@@ -12,6 +12,7 @@ from .views import (
     StudentDetailsAPIView,
     StudentProfileAPIView,
     get_student_achievements,
+    CreateStudentAPIView,
     # Removed DepartmentProfileCreateAPIView (Use Djoser or Bulk instead)
 )
 
@@ -32,5 +33,6 @@ urlpatterns = [
     path('faculty-students/',FacultyStudentsAPIView.as_view(),name="faculty-students"),
     path('student-profile/',StudentProfileAPIView.as_view(),name="student-profile"),
     path('student-details/<int:pk>/',StudentDetailsAPIView.as_view(),name="student_profile"),
-    path('student-achievements/',get_student_achievements,name="student_achievements")
+    path('student-achievements/',get_student_achievements,name="student_achievements"),
+    path('create-student/',CreateStudentAPIView.as_view(),name="create_student")
 ]

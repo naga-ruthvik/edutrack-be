@@ -20,7 +20,6 @@ from .models import Department
 from achievements.models import Certificate
 from django.db.models import Sum
 
-
 # Permissions
 from authentication.permissions import IsInstitutionAdmin, IsFaculty, IsStudent, IsRecruiter # Assuming you created these
 
@@ -47,15 +46,17 @@ class InstitutionStudentsAPIView(ListAPIView):
     Lists all students in the CURRENT tenant.
     No mixin needed. Schema handles isolation.
     """
-    permission_classes = [IsAuthenticated, IsInstitutionAdmin, IsRecruiter]
+    permission_classes = [IsAuthenticated, IsInstitutionAdmin]
     # Serializer needed for response (you can reuse the one from users app)
     from authentication.serializers import StudentProfileSerializer 
     serializer_class = StudentProfileSerializer
 
     def get_queryset(self):
         # Simply return all. The DB Schema limits this to the current college.
+        print(self.request.user)
+        print(self.request.user.role)
         # specific to your serializer fields
-        return StudentProfile.objects.select_related('department').all()
+        return StudentProfile.objects.all()
 
 
 # 2. BULK UPLOAD (Heavy Refactor)
@@ -443,3 +444,15 @@ def get_student_achievements(request):
         return Response(students_data)
 
     return Response({"error": "Invalid Role"}, status=400)
+
+
+class CreateStudentAPIView(CreateAPIView):
+    serializer_class = StudentProfileSerializer
+    permission_classes = [IsAuthenticated, IsInstitutionAdmin]
+    def perform_create(self, serializer):
+        serializer.save(institution=self.request.user.institution)
+
+@api_view(["GET"])
+def get_students(request):
+    students=StudentProfile.objects.all()
+    return Response(StudentProfileSerializer(students, many=True).data)
