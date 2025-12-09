@@ -20,9 +20,6 @@ def generate_student_details(student):
                 "year": edu.passing_year
             } for edu in student_profile.education_history.all()
         ],
-        # "skills":student_profile.skills,
-        # "experience":student_profile.experience,
-        # "projects":student_profile.projects,
         "achievements": [
             {
                 "title": ach.title,
@@ -30,7 +27,8 @@ def generate_student_details(student):
                 "date": ach.date_of_event.strftime('%Y-%m-%d') if ach.date_of_event else None,
                 "description": ach.ai_summary or ach.title
             } for ach in student_profile.achievements.all()
-        ]
+        ],
+        "skills": list(student_profile.skills.values_list('name', flat=True)) if hasattr(student_profile, 'skills') else [],
     }
 
     return student_data

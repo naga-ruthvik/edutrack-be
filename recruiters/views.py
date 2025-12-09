@@ -21,3 +21,8 @@ class ListApplicationsAPIView(generics.ListAPIView):
     def get_queryset(self):
         return Application.objects.filter(job__organization=self.request.user.recruiter_profile.organization)
 
+class ApplyJob(generics.CreateAPIView):
+    permission_classes = [IsStudent]
+    serializer_class = ApplicationSerializer
+    def get_queryset(self):
+        return Application.objects.filter(job__organization=self.request.user.recruiter_profile.organization)

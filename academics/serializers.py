@@ -95,7 +95,7 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     def get_skills(self,obj):
         return obj.skills.all().values_list('name', flat=True)
     
-    
+
 
     def get_education(self,obj):
         return StudentEducationSerializer(obj.education_history.all(), many=True).data
@@ -104,5 +104,5 @@ class StudentDetailSerializer(serializers.ModelSerializer):
         model = StudentProfile
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 
                   'address', 'city', 'country', 'state', 'zipcode', 'role',
-                  'roll_number', 'department', 'batch_year', 'current_semester', 'mentor','education']
+                  'roll_number', 'department', 'batch_year', 'current_semester', 'mentor','education','skills']
                   

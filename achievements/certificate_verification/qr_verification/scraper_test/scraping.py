@@ -143,7 +143,17 @@ def find_pdf_links(html: str, base_url: str) -> List[str]:
     links = []
     seen = set()
     
-    # 1. Standard .pdf extension check
+    # 2. Check for embedded PDFs (iframe, embed, object)
+    for tag in soup.find_all(["iframe", "embed", "object"]):
+        src = tag.get("src") or tag.get("data")
+        candidate = normalize_url(base_url, src)
+        if candidate and candidate not in seen:
+            if is_pdf_link(candidate) or check_link_is_pdf(candidate):
+                logger.info(f"Found embedded PDF: {candidate}")
+                links.append(candidate)
+                seen.add(candidate)
+
+    # 3. Keyword + Content-Type check (for hidden PDFs in links)
     for a in soup.find_all("a", href=True):
         candidate = normalize_url(base_url, a["href"])
         if not candidate or candidate in seen:
@@ -154,7 +164,6 @@ def find_pdf_links(html: str, base_url: str) -> List[str]:
             links.append(candidate)
             seen.add(candidate)
         else:
-            # 2. Keyword + Content-Type check (for hidden PDFs)
             text = a.get_text(separator=" ", strip=True).lower()
             keywords = ["download", "certificate", "statement", "score card", "print"]
             if any(k in text for k in keywords):
@@ -163,7 +172,7 @@ def find_pdf_links(html: str, base_url: str) -> List[str]:
                     logger.info(f"Confirmed hidden PDF link: {candidate}")
                     links.append(candidate)
                     seen.add(candidate)
-
+                    
     logger.info(f"Total PDF links found: {len(links)}")
     return sorted(list(links))
 

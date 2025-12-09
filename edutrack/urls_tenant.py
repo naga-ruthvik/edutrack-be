@@ -23,4 +23,5 @@ urlpatterns = [
     path('achievements/', include('achievements.urls')),
     path('resume/',include('resume.urls')),
     path('silk/', include('silk.urls', namespace='silk')),
+    path('profiles/', include('profiles.urls')),
 ]

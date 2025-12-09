@@ -27,6 +27,13 @@ class StudentProfile(models.Model):
         null=True,
         related_name='mentees'
     )
+    
+    # Skills Integration
+    skills = models.ManyToManyField(
+        'achievements.Skill',
+        related_name='students',
+        blank=True
+    )
 
     def __str__(self):
         return f"{self.roll_number} - {self.user.get_full_name()}"
