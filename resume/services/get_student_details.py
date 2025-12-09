@@ -28,8 +28,31 @@ def generate_student_details(student):
                 "description": ach.ai_summary or ach.title
             } for ach in student_profile.achievements.all()
         ],
-        "skills": list(student_profile.skills.values_list('name', flat=True)) if hasattr(student_profile, 'skills') else [],
+        "skills": get_aggregated_skills(student_profile),
     }
 
     return student_data
+
+def get_aggregated_skills(profile):
+    """
+    Combines explicit skills from StudentProfile and derived skills from Certificates.
+    """
+    # 1. Explicit Skills (Directly assigned)
+    skills = set()
+    if hasattr(profile, 'skills'):
+        skills.update(profile.skills.values_list('name', flat=True))
+
+    # 2. Derived from Certificates (Primary & Secondary)
+    # Filter only verified/AI_verified if needed? For now, include all uploaded.
+    certs = profile.achievements.all()
+    
+    # Primary Skills
+    skills.update(certs.exclude(primary_skill=None).values_list('primary_skill__name', flat=True))
+    
+    # Secondary Skills (ManyToMany)
+    skills.update(certs.values_list('secondary_skills__name', flat=True))
+    
+    # Filter duplicates and None
+    valid_skills = [s for s in skills if s]
+    return sorted(valid_skills)
 
