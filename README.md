@@ -1,3 +1,4 @@
+Here is the complete, corrected README.md file content. The code blocks are properly formatted so you can copy the entire text below and paste it directly into your GitHub README.md file.
 🎓 EduTrack — Project Setup Guide
 🧰 Prerequisites
 Before you start, ensure you have the following installed:
@@ -23,11 +24,9 @@ git clone https://github.com/your-username/edutrack.git
 cd edutrack
 
 2. Create a virtual environment
-py -m venv venv
+python -m venv venv
 
-or (depending on your OS)
-python3 -m venv venv
-
+(Note: On some systems, use python3 -m venv venv or py -m venv venv)
 3. Activate the virtual environment
  * Windows:
    venv\Scripts\activate
