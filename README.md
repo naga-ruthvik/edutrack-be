@@ -1,144 +1,113 @@
-# 🎓 EduTrack — Project Setup Guide
-
-## 🧰 Prerequisites
-
+🎓 EduTrack — Project Setup Guide
+🧰 Prerequisites
 Before you start, ensure you have the following installed:
+ * Python (latest stable version)
+ * pip (Python package manager)
+ * Git (for version control)
+ * Docker Desktop (for running Redis)
+ * Virtual environment module (venv)
+> ⚠️ Commands may slightly vary on macOS or Linux — adjust accordingly.
+> 
+🐳 Redis Setup (Using Docker)
+We use Redis as a message broker for Celery background tasks. The easiest way to run it is via Docker.
+ * Ensure Docker is running on your machine.
+ * Pull and run the Redis container:
+   docker run -d --name edutrack-redis -p 6379:6379 redis
 
-* **Python** (latest stable version)
-* **pip** (Python package manager)
-* **Git** (for version control)
-* **Virtual environment** module (`venv`)
+ * Verify it's running:
+   docker ps
 
-> ⚠️ Commands may slightly vary on **macOS** or **Linux** — adjust accordingly.
-
----
-
-## 🚀 Backend Setup (Django)
-
-### 1. Clone the repository
-
-```bash
+🚀 Backend Setup (Django)
+1. Clone the repository
 git clone https://github.com/your-username/edutrack.git
 cd edutrack
-```
 
-### 2. Create a virtual environment
-
-```bash
+2. Create a virtual environment
 py -m venv venv
-```
 
 or (depending on your OS)
-
-```bash
 python3 -m venv venv
-```
 
-### 3. Activate the virtual environment
+3. Activate the virtual environment
+ * Windows:
+   venv\Scripts\activate
 
-* **Windows:**
+ * macOS/Linux:
+   source venv/bin/activate
 
-  ```bash
-  venv\Scripts\activate
-  ```
-* **macOS/Linux:**
-
-  ```bash
-  source venv/bin/activate
-  ```
-
-### 4. Install dependencies
-
-```bash
+4. Install dependencies
 pip install -r requirements.txt
-```
 
-### 5. Run the development server
+5. Run Database Migrations
+python manage.py migrate
 
-Navigate into the Django project folder (for example `edutrack/`) and run:
-
-```bash
-cd edutrack
-py manage.py runserver
-```
-
-or
-
-```bash
+6. Run the development server
+Navigate into the Django project folder (e.g., edutrack/) and run:
 python manage.py runserver
-```
 
 Your backend should now be running at:
-👉 [http://localhost:8000/](http://localhost:8000/)
+👉 http://localhost:8000/
+⚡ Celery Background Tasks
+To process background jobs (like AI verification, scraping, emails), you need to run a Celery worker. Make sure Redis is running before starting Celery.
+Open a new terminal window, activate your virtual environment, and run the command for your OS:
+Windows
+Windows does not natively support process forking, so we use the solo pool or eventlet.
+celery -A edutrack worker --loglevel=info --pool=solo
 
----
+Linux / macOS
+celery -A edutrack worker --loglevel=info
 
-## 🖥️ Frontend Developers — Important Note
-
-* Ensure the **backend server** is running before testing frontend integration.
-* You can visit **[http://localhost:8000/](http://localhost:8000/)** to view available API endpoints.
-* Use **Postman** or any API client to test the endpoints — API documentation will guide you on usage and available routes.
-
----
-
-## 🗂️ Django Project Structure
-
+> Note: Replace edutrack with the actual name of your project folder containing celery.py if it differs.
+> 
+🖥️ Frontend Developers — Important Note
+ * Ensure the backend server AND Redis/Celery are running before testing features that require background processing.
+ * You can visit http://localhost:8000/ to view available API endpoints.
+ * Use Postman or any API client to test the endpoints.
+🗂️ Django Project Structure
 A typical Django project structure looks like this:
-
-```
 edutrack/
 ├── manage.py
 ├── requirements.txt
 ├── venv/
-├── edutrack/                # Main project folder (settings, URLs, WSGI/ASGI)
+├── edutrack/                # Main project config
 │   ├── __init__.py
-│   ├── asgi.py
+│   ├── celery.py            # Celery Configuration
 │   ├── settings.py
 │   ├── urls.py
 │   ├── wsgi.py
 │
-├── apps/                    # (optional) folder for all Django apps
+├── apps/                    # Folder for all Django apps
 │   ├── accounts/
-│   │   ├── admin.py
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── urls.py
-│   │   └── ...
-│   ├── scholarships/
+│   ├── achievements/
 │   └── ...
 │
 ├── static/                  # CSS, JS, images
 ├── templates/               # HTML templates
 └── README.md
-```
 
----
+👥 Meet the Team
+| Name | Role |
+|---|---|
+| K. Naga Ruthvik | Backend Developer |
+| D. Anvesh | Frontend Developer |
+| Nandini | Full Stack Developer |
+| Bharath Sai | AI Developer |
+| Priya Chandana | Mobile Application Developer |
+| Kaarthika | Presentation & Documentation |
+🪄 Contribution Guidelines
+ * Never push directly to the main branch.
+ * Create a separate branch for your changes:
+   git checkout -b your-branch-name
 
-## 🪄 Contribution Guidelines
+ * After making changes, commit and push your branch:
+   git add .
+git commit -m "Your message"
+git push origin your-branch-name
 
-* **Never push directly** to the `main` branch.
-* Create a **separate branch** for your changes:
+ * Create a Pull Request (PR) on GitHub for review and merge.
+🧩 Notes
+ * Always pull the latest changes from the main branch before starting new work:
+   git pull origin main
 
-  ```bash
-  git checkout -b your-branch-name
-  ```
-* After making changes, **commit and push** your branch:
-
-  ```bash
-  git add .
-  git commit -m "Your message"
-  git push origin your-branch-name
-  ```
-* Create a **Pull Request (PR)** on GitHub for review and merge.
-
----
-
-## 🧩 Notes
-
-* Always **pull the latest changes** from the main branch before starting new work:
-
-  ```bash
-  git pull origin main
-  ```
-* Keep your **virtual environment** activated while running or developing the project.
-* If any module is missing, add it to `requirements.txt` and inform the team.
+ * Keep your virtual environment activated while running or developing the project.
+ * If any module is missing, add it to requirements.txt and inform the team.
