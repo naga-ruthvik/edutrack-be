@@ -19,6 +19,9 @@ class DebugTenantSubfolderMiddleware(TenantSubfolderMiddleware):
         tenant_name = request.tenant.schema_name if hasattr(request, 'tenant') else 'NO TENANT'
         urlconf = getattr(request, 'urlconf', 'NOT SET')
         
+        tenant_name = request.tenant.schema_name if hasattr(request, 'tenant') else 'NO TENANT'
+        urlconf = getattr(request, 'urlconf', 'NOT SET')
+        
         logger.info(f"[TENANT] {tenant_name:15} | {request.method:4} {request.path}")
         
         return result

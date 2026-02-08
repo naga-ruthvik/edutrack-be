@@ -38,9 +38,6 @@ from authentication.serializers import StudentProfileSerializer
 # Utilities
 from utils.generate_credentials import create_college_username, create_custom_password, save_data
 
-# ---------------------------------------------------
-# 1. LIST STUDENTS (Refactored)
-# ---------------------------------------------------
 class InstitutionStudentsAPIView(ListAPIView):
     """
     Lists all students in the CURRENT tenant.

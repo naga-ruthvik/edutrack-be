@@ -16,12 +16,17 @@ from .models import (
     PlacementStats,
     AlumniMaster,
 )
+from customers.models import Institution
+ERP_BASE_URL = "http://erpbackend-mu.vercel.app/api"
 
-ERP_BASE_URL = "https://backend-erp-zeta.vercel.app/api"
 
-
-def get_headers():
-    return {"Content-Type": "application/json"}
+def get_headers(token=None, integration_id=None):
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    if integration_id:
+        headers["integration-id"] = str(integration_id)
+    return headers
 
 def parse_iso_date(date_str):
     if not date_str:
@@ -30,9 +35,10 @@ def parse_iso_date(date_str):
     return date_str.split("T")[0]
 
 
-def fetch_erp(endpoint: str):
+def fetch_erp(endpoint: str, token: str = None, integration_id: str = None):
     url = f"{ERP_BASE_URL}/{endpoint}"
-    resp = requests.get(url, headers=get_headers(), timeout=30)
+    print(f"Fetching ERP: {url} | Integration-ID: {integration_id} | Token: {token[:10] + '...' if token else 'NONE'}")
+    resp = requests.get(url, headers=get_headers(token, integration_id), timeout=30)
     resp.raise_for_status()
     data = resp.json()
     if isinstance(data, dict):
@@ -43,7 +49,10 @@ def fetch_erp(endpoint: str):
 @shared_task
 def sync_users(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("users")
+        inst = Institution.objects.get(schema_name=schema_name)
+        token = inst.edlink_access_token
+        integration_id = inst.edlink_integration_id
+        data = fetch_erp("users", token, integration_id)
         synced = 0
         for item in data:
             User.objects.update_or_create(
@@ -64,7 +73,8 @@ def sync_users(schema_name: str):
 @shared_task
 def sync_departments(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("departments")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("departments", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         for item in data:
             Department.objects.update_or_create(
@@ -83,7 +93,8 @@ def sync_faculty(schema_name: str):
     User = get_user_model()
 
     with schema_context(schema_name):
-        data = fetch_erp("faculty")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("faculty", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         for item in data:
             username = item["employee_id"]  # or whatever mapping you decided
@@ -123,7 +134,8 @@ def sync_faculty(schema_name: str):
 @shared_task
 def sync_students(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("students")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("students", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         for item in data:
             roll = item["roll_number"]
@@ -174,7 +186,8 @@ def sync_students(schema_name: str):
 @shared_task
 def sync_courses(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("courses")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("courses", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         for item in data:
             dept = None
@@ -201,7 +214,8 @@ def sync_courses(schema_name: str):
 @shared_task
 def sync_subjects(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("subjects")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("subjects", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         skipped = 0
         for item in data:
@@ -241,7 +255,8 @@ def sync_subjects(schema_name: str):
 @shared_task
 def sync_exams(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("exams")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("exams", inst.edlink_access_token, inst.edlink_integration_id)
         if not data:
             print(f"{schema_name}: no exams data")
             return {"synced": 0}
@@ -278,7 +293,8 @@ def sync_exams(schema_name: str):
 @shared_task
 def sync_student_enrollments(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("enrollments")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("enrollments", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         skipped = 0
         for item in data:
@@ -312,7 +328,8 @@ def sync_student_enrollments(schema_name: str):
 @shared_task
 def sync_marks_grades(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("marks")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("marks", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         skipped = 0
         
@@ -343,7 +360,8 @@ def sync_marks_grades(schema_name: str):
 @shared_task
 def sync_placement_records(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("placements")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("placements", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         skipped = 0
         
@@ -374,7 +392,8 @@ def sync_placement_records(schema_name: str):
 @shared_task
 def sync_placement_stats(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("placement-stats")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("placement-stats", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         for item in data:
             dept = Department.objects.get(code=item["department_code"])
@@ -397,7 +416,8 @@ def sync_placement_stats(schema_name: str):
 @shared_task
 def sync_alumni(schema_name: str):
     with schema_context(schema_name):
-        data = fetch_erp("alumni")
+        inst = Institution.objects.get(schema_name=schema_name)
+        data = fetch_erp("alumni", inst.edlink_access_token, inst.edlink_integration_id)
         synced = 0
         skipped = 0
         

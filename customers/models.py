@@ -27,7 +27,7 @@ class Institution(TenantMixin):
     
     created_at = models.DateTimeField(auto_now_add=True)
 
-    edlink_integration_id = models.UUIDField(null=True, blank=True)
+    edlink_integration_id = models.CharField(max_length=255, null=True, blank=True)
     edlink_access_token = models.TextField(null=True, blank=True)
 
     def __str__(self):
