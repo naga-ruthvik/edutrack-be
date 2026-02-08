@@ -35,3 +35,6 @@ staticfiles/
 .vscode/
 # Environment variable files
 .env
+
+testsprite_tests/
+testsprite_tests/***
