@@ -35,4 +35,5 @@ urlpatterns = [
     path("resume/", include("resume.urls")),
     path("profiles/", include("profiles.urls")),
     path("erp/", include("erp.urls")),
+    path("orbit/", include("orbit.urls")),
 ]

@@ -4,37 +4,40 @@ from rest_framework import serializers
 from .models import User
 from profiles.models import StudentProfile, FacultyProfile
 
-# 1. Serializer for Creating Users (Used by Djoser /users/)
+from profiles.serializers import StudentProfileSerializer, FacultyProfileSerializer
+
+
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         model = User
-        # We explicitly include 'role' so Djoser saves it
-        fields = ('id', 'email', 'username', 'password', 'first_name', 'last_name', 'role')
+        fields = (
+            "id",
+            "email",
+            "username",
+            "password",
+            "first_name",
+            "last_name",
+            "role",
+        )
 
-# 2. Serializers for nested Profile Data
-class StudentProfileSerializer(serializers.ModelSerializer):
-    user=BaseUserSerializer()
-    def get_user(self,obj):
-        return BaseUserSerializer(obj.user.id)
-    class Meta:
-        model = StudentProfile
-        fields = ['roll_number', 'batch_year', 'current_semester', 'department','user']
 
-class FacultyProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FacultyProfile
-        fields = ['employee_id', 'designation', 'is_hod', 'department','user']
-
-# 3. Serializer for Viewing Current User (GET /users/me/)
 class CurrentUserSerializer(BaseUserSerializer):
     profile = serializers.SerializerMethodField()
 
     class Meta(BaseUserSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'role', 'profile_picture', 'profile')
+        fields = (
+            "id",
+            "email",
+            "username",
+            "first_name",
+            "last_name",
+            "role",
+            "profile_picture",
+            "profile",
+        )
 
     def get_profile(self, obj):
-        # Dynamically attach the correct profile data
         if obj.role == User.Role.STUDENT:
             try:
                 return StudentProfileSerializer(obj.student_profile).data

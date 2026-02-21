@@ -6,5 +6,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # This handles http://127.0.0.1:8000/public/...
     path("public/", include("public_api.urls")),
-    path("orbit/", include("orbit.urls")),
+
 ]

@@ -52,7 +52,6 @@ TENANT_APPS = (
     "resume",
     "lms",
     "erp",
-    "orbit",
 )
 
 INSTALLED_APPS = list(SHARED_APPS) + [
@@ -74,11 +73,16 @@ TENANT_URLCONF = "edutrack.urls_tenant"  # Not used by TenantSubfolderMiddleware
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    "edutrack.debug_middleware.DebugTenantSubfolderMiddleware",
-    "orbit.middleware.OrbitMiddleware",
     "django.middleware.security.SecurityMiddleware",
+
+    "corsheaders.middleware.CorsMiddleware",
+
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    "edutrack.debug_middleware.DebugTenantSubfolderMiddleware",
+
+    "orbit.middleware.OrbitMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -86,6 +90,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 
 TEMPLATES = [
     {
@@ -261,5 +266,10 @@ ORBIT_CONFIG = {
     "RECORD_STORAGE": True,
     # Security
     # "AUTH_CHECK": lambda request: request.user.is_staff,
-    "IGNORE_PATHS": ["/orbit/", "/static/", "/media/"],
+    "IGNORE_PATHS": [
+    r'.*/orbit/.*',
+    r'^/static/.*',
+    r'^/media/.*'
+]
+
 }

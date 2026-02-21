@@ -7,31 +7,32 @@ from djoser.email import ActivationEmail
 
 # Models
 from customers.models import Institution, Domain
-from authentication.models import User 
+from authentication.models import User
 
 from .serializers import RegisterCollegeSerializer, InstitutionSerializer
+
 
 class RegisterCollegeView(GenericAPIView):
     """
     Public Endpoint: Creates a new College (Tenant) AND the Principal (Admin User).
     URL: /public/register-college/
     """
-    permission_classes = [] 
+
+    permission_classes = []
     serializer_class = RegisterCollegeSerializer
 
     def post(self, request):
-        # 1. Automatic Validation
         serializer = self.get_serializer(data=request.data)
-        
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # 2. Extract Validated Data
         data = serializer.validated_data
-        college_name = data['college_name']
-        slug = data['slug']
-        admin_email = data['admin_email']
-        password = data['password']
+        college_name = data["college_name"]
+        slug = data["slug"]
+        admin_email = data["admin_email"]
+        password = data["password"]
 
         try:
             with transaction.atomic():
@@ -46,40 +47,49 @@ class RegisterCollegeView(GenericAPIView):
                 domain.tenant = college
                 domain.is_primary = True  # Set as primary domain
                 domain.save()
-                
+
                 # 5. Create Admin User INSIDE the new Schema
                 with schema_context(college.schema_name):
                     user = User.objects.create_user(
                         email=admin_email,
                         username=admin_email,
                         password=password,
-                        role='ADMIN', 
-                        is_staff=True, 
+                        role="ADMIN",
+                        is_staff=True,
                         is_superuser=True,
-                        is_active=False # User must activate via email
+                        is_active=False,  # User must activate via email
                     )
 
                     # We need to pass the request context so Djoser can build the absolute URL
-                    context = {'user': user}
-                    to = [user.email]
-                    email = ActivationEmail(context=context)
-                    email.send(to)
+                    try:
+                        context = {"user": user}
+                        to = [user.email]
+                        email = ActivationEmail(context=context)
+                        email.send(to)
+                    except Exception as e:
+                        print("error:", str(e))
 
-            return Response({
-                "message": f"College '{college_name}' created successfully. Activation email sent to {admin_email}.",
-                "login_url": f"/api/{slug}/auth/jwt/create/"
-            }, status=status.HTTP_201_CREATED)
+            return Response(
+                {
+                    "message": f"College '{college_name}' created successfully. Activation email sent to {admin_email}.",
+                    "login_url": f"/api/{slug}/auth/jwt/create/",
+                },
+                status=status.HTTP_201_CREATED,
+            )
 
         except Exception as e:
+            print(str(e))
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ListCollegesView(ListAPIView):
     """
     Public Endpoint: Lists all colleges (tenants).
     URL: /public/list-colleges/
     """
+
     permission_classes = []
     serializer_class = InstitutionSerializer
 
     def get_queryset(self):
-        return Institution.objects.exclude(schema_name='public')
+        return Institution.objects.exclude(schema_name="public")
