@@ -4,6 +4,44 @@ from profiles.models import StudentProfile, FacultyProfile, Education
 from academics.models import Department
 
 
+# USER SERIALIZERS
+class UserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+        ]
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "role",
+            "phone_number",
+            "address",
+            "city",
+            "country",
+            "state",
+            "zip_code",
+        ]
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "email",
+            "password",
+        ]
+
+
 class BulkProfileUploadSerializer(serializers.Serializer):
     """
     Validates Excel upload for bulk student/faculty creation.
@@ -18,6 +56,7 @@ class BulkProfileUploadSerializer(serializers.Serializer):
         return value
 
 
+# FACULTY SERIALIZERS
 class HODListSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source="user.get_full_name")
     email = serializers.EmailField(source="user.email")
@@ -49,23 +88,19 @@ class CreateHODSerializer(serializers.Serializer):
             pass
 
 
-class UserSerializer(serializers.ModelSerializer):
+class FacultyProfileSerializer(serializers.ModelSerializer):
+    """
+    Used for listing/retrieving faculty profiles with nested user data.
+    """
+
+    user = UserSerializer(read_only=True)
+
     class Meta:
-        model = User
-        fields = [
-            "id",
-            "username",
-            "email",
-            "role",
-            "phone_number",
-            "address",
-            "city",
-            "country",
-            "state",
-            "zip_code",
-        ]
+        model = FacultyProfile
+        fields = ["id", "employee_id", "designation", "is_hod", "department", "user"]
 
 
+# STUDENT SERIALIZERS
 class StudentEducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Education
@@ -126,12 +161,12 @@ class StudentDetailSerializer(serializers.ModelSerializer):
         ]
 
 
-class StudentProfileSerializer(serializers.ModelSerializer):
+class StudentListSerializer(serializers.ModelSerializer):
     """
     Used for listing/retrieving student profiles with nested user data.
     """
 
-    user = UserSerializer(read_only=True)
+    user = UserListSerializer(read_only=True)
 
     class Meta:
         model = StudentProfile
@@ -145,13 +180,19 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         ]
 
 
-class FacultyProfileSerializer(serializers.ModelSerializer):
-    """
-    Used for listing/retrieving faculty profiles with nested user data.
-    """
-
-    user = UserSerializer(read_only=True)
+class StudentCreateSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()
+    department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all())
 
     class Meta:
-        model = FacultyProfile
-        fields = ["id", "employee_id", "designation", "is_hod", "department", "user"]
+        model = StudentProfile
+        fields = ["user", "roll_number", "department", "batch_year", "current_semester"]
+
+    def create(self, validated_data):
+        user_data = validated_data.pop("user")
+        roll_number = validated_data["roll_number"]
+        user = User.objects.create_user(
+            **user_data, role=User.Role.STUDENT, username=roll_number
+        )
+        student = StudentProfile.objects.create(user=user, **validated_data)
+        return student

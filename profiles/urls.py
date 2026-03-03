@@ -1,12 +1,9 @@
 from django.urls import path
 from profiles.views import (
     # Student views
-    StudentListView,
-    StudentProfileListView,
+    StudentListCreateView,
     StudentDetailView,
-    StudentCreateView,
     student_total_view,
-    student_list_all_view,
     student_data_view,
     # Faculty views
     HODCreateView,
@@ -18,15 +15,8 @@ from profiles.views import (
 
 urlpatterns = [
     # students
-    path("students/", StudentListView.as_view(), name="student_list"),
+    path("students/", StudentListCreateView.as_view(), name="student_list"),
     path("students/<int:pk>/", StudentDetailView.as_view(), name="student_detail"),
-    path("students/create/", StudentCreateView.as_view(), name="student_create"),
-    path("students/all/", student_list_all_view, name="student_list_all"),
-    path(
-        "students/profile/",
-        StudentProfileListView.as_view(),
-        name="student_profile_list",
-    ),
     path("students/data/", student_data_view, name="student_data"),
     path("students/total/", student_total_view, name="student_total"),
     # faculty

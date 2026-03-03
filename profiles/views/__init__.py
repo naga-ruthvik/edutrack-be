@@ -2,12 +2,9 @@
 # Re-export all views so imports like `from profiles.views import StudentListView` work.
 
 from profiles.views.student import (
-    StudentListView,
-    StudentProfileListView,
+    StudentListCreateView,
     StudentDetailView,
-    StudentCreateView,
     student_total_view,
-    student_list_all_view,
     student_data_view,
 )
 

@@ -1,55 +1,57 @@
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
+from rest_framework.generics import (
+    ListAPIView,
+    CreateAPIView,
+    GenericAPIView,
+    RetrieveAPIView,
+)
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
 
 # Models
 from authentication.models import User
 from profiles.models import StudentProfile
 
 # Permissions
-from authentication.permissions import IsInstitutionAdmin, IsStudent, IsStudentOrFaculty
+from authentication.permissions import IsInstitutionAdmin, IsStudentOrFaculty, IsStudent
 
 # Serializers
-from profiles.serializers import StudentProfileSerializer, StudentDetailSerializer
+from profiles.serializers import (
+    StudentListSerializer,
+    StudentDetailSerializer,
+    StudentCreateSerializer,
+)
 
 # Services
 from resume.services.get_student_details import generate_student_details
+from rest_framework.generics import ListCreateAPIView
+
+
+class StudentListCreateView(GenericAPIView):
+    queryset = StudentProfile.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method in ["POST"]:
+            return StudentCreateSerializer
+        return StudentListSerializer
+
+    def get(self, request):
+        students = self.get_queryset()
+        serializer = self.get_serializer(students, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        return Response(
+            StudentListSerializer(student).data, status=status.HTTP_201_CREATED
+        )
 
 
 # ---------------------------------------------------
-# 1. LIST ALL STUDENTS (Admin only)
-# ---------------------------------------------------
-class StudentListView(ListAPIView):
-    """
-    Lists all students in the CURRENT tenant.
-    Schema handles tenant isolation.
-    """
-
-    permission_classes = [IsAuthenticated, IsInstitutionAdmin]
-    serializer_class = StudentProfileSerializer
-
-    def get_queryset(self):
-        return StudentProfile.objects.select_related("user", "department").all()
-
-
-# ---------------------------------------------------
-# 2. STUDENT PROFILE LIST (for Students)
-# ---------------------------------------------------
-class StudentProfileListView(ListAPIView):
-    """
-    Lists all student profiles — accessible to authenticated students.
-    """
-
-    serializer_class = StudentProfileSerializer
-    permission_classes = [IsAuthenticated, IsStudent]
-
-    def get_queryset(self):
-        return StudentProfile.objects.select_related("user", "department").all()
-
-
-# ---------------------------------------------------
-# 3. STUDENT DETAIL (by PK)
+# 2. STUDENT DETAIL (by PK)
 # ---------------------------------------------------
 class StudentDetailView(RetrieveAPIView):
     """
@@ -66,18 +68,6 @@ class StudentDetailView(RetrieveAPIView):
 
 
 # ---------------------------------------------------
-# 4. CREATE STUDENT (Admin)
-# ---------------------------------------------------
-class StudentCreateView(CreateAPIView):
-    """
-    Create a new student profile. Admin only.
-    """
-
-    serializer_class = StudentProfileSerializer
-    permission_classes = [IsAuthenticated, IsInstitutionAdmin]
-
-
-# ---------------------------------------------------
 # 5. TOTAL STUDENTS COUNT
 # ---------------------------------------------------
 @api_view(["GET"])
@@ -88,19 +78,6 @@ def student_total_view(request):
     """
     count = StudentProfile.objects.count()
     return Response({"total_students": count})
-
-
-# ---------------------------------------------------
-# 6. LIST ALL STUDENTS (Admin — simple list)
-# ---------------------------------------------------
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsInstitutionAdmin])
-def student_list_all_view(request):
-    """
-    Returns all students. Requires admin authentication.
-    """
-    students = StudentProfile.objects.select_related("user", "department").all()
-    return Response(StudentProfileSerializer(students, many=True).data)
 
 
 # ---------------------------------------------------

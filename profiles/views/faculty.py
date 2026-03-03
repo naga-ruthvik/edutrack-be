@@ -14,7 +14,7 @@ from authentication.permissions import IsInstitutionAdmin, IsFaculty
 from profiles.serializers import (
     CreateHODSerializer,
     HODListSerializer,
-    StudentProfileSerializer,
+    StudentListSerializer,
 )
 
 
@@ -86,7 +86,7 @@ class FacultyMenteeListView(ListAPIView):
     """
 
     permission_classes = [IsAuthenticated, IsFaculty]
-    serializer_class = StudentProfileSerializer
+    serializer_class = StudentListSerializer
 
     def get_queryset(self):
         return StudentProfile.objects.filter(
