@@ -1,8 +1,8 @@
-from rest_framework.generics import ListAPIView, CreateAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Department
-from .serializers import CreateDepartmentSerializer, DepartmentSerializer
+from .serializers import DepartmentListSerializer, DepartmentCreateSerializer
 from authentication.permissions import IsInstitutionAdmin
 
 
@@ -12,17 +12,19 @@ class CreateDepartmentAPIView(CreateAPIView):
     """
 
     queryset = Department.objects.all()
-    serializer_class = CreateDepartmentSerializer
+    serializer_class = DepartmentCreateSerializer
     permission_classes = [IsAuthenticated, IsInstitutionAdmin]
 
 
-class DepartmentListAPIView(ListAPIView):
+class DepartmentListCreateView(ListCreateAPIView):
     """
     Returns a list of all departments in the institution.
     """
 
-    serializer_class = DepartmentSerializer
+    queryset = Department.objects.all()
     permission_classes = [IsAuthenticated, IsInstitutionAdmin]
 
-    def get_queryset(self):
-        return Department.objects.all()
+    def get_serializer_class(self):
+        if self.request.method in ["POST"]:
+            return DepartmentCreateSerializer
+        return DepartmentListSerializer
