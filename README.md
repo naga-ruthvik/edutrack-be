@@ -1,4 +1,4 @@
-Here is the complete, corrected README.md file content. The code blocks are properly formatted so you can copy the entire text below and paste it directly into your GitHub README.md file.
+
 🎓 EduTrack — Project Setup Guide
 🧰 Prerequisites
 Before you start, ensure you have the following installed:
