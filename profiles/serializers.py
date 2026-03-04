@@ -39,6 +39,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = [
             "email",
             "password",
+            "username",
         ]
 
 
@@ -70,22 +71,24 @@ class HODListSerializer(serializers.ModelSerializer):
         return obj.department.code if obj.department else None
 
 
-class CreateHODSerializer(serializers.Serializer):
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-    department_id = serializers.ChoiceField(choices=[])
-    username = serializers.CharField(required=False)  # Optional, can derive from email
+class HODCreateSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()
+    department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all())
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            self.fields["department_id"].choices = list(
-                Department.objects.values_list("id", "code")
-            )
-        except Exception:
-            pass
+    class Meta:
+        model = FacultyProfile
+        fields = ["user", "department", "employee_id"]
+
+    def create(self, validated_data):
+        user_data = validated_data.pop("user")
+        user = User.objects.create(**user_data, role=User.Role.FACULTY)
+        hod = FacultyProfile.objects.create(
+            user=user,
+            is_hod=True,
+            designation=FacultyProfile.Designation.PROFESSOR,
+            **validated_data,
+        )
+        return hod
 
 
 class FacultyProfileSerializer(serializers.ModelSerializer):

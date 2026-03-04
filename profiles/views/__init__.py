@@ -9,8 +9,7 @@ from profiles.views.student import (
 )
 
 from profiles.views.faculty import (
-    HODCreateView,
-    HODListView,
+    HODListCreateView,
     FacultyMenteeListView,
 )
 

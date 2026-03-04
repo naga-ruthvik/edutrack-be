@@ -6,8 +6,7 @@ from profiles.views import (
     student_total_view,
     student_data_view,
     # Faculty views
-    HODCreateView,
-    HODListView,
+    HODListCreateView,
     FacultyMenteeListView,
     # Bulk upload
     BulkProfileUploadView,
@@ -15,7 +14,7 @@ from profiles.views import (
 
 urlpatterns = [
     # students
-    path("students/", StudentListCreateView.as_view(), name="student_list"),
+    path("students/", StudentListCreateView.as_view(), name="student_list_create"),
     path("students/<int:pk>/", StudentDetailView.as_view(), name="student_detail"),
     path("students/data/", student_data_view, name="student_data"),
     path("students/total/", student_total_view, name="student_total"),
@@ -24,8 +23,7 @@ urlpatterns = [
         "faculty/mentees/", FacultyMenteeListView.as_view(), name="faculty_mentee_list"
     ),
     # HODs
-    path("hods/", HODListView.as_view(), name="hod_list"),
-    path("hods/create/", HODCreateView.as_view(), name="hod_create"),
+    path("hods/", HODListCreateView.as_view(), name="hod_list"),
     # Bulk Upload
     path("bulk-upload/", BulkProfileUploadView.as_view(), name="profile_bulk_upload"),
 ]

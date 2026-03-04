@@ -24,7 +24,10 @@ from profiles.serializers import (
 )
 
 # Services
-from resume.services.get_student_details import generate_student_details
+from resume.services.get_student_details import (
+    generate_student_details,
+    prefetch_user_for_resume,
+)
 from rest_framework.generics import ListCreateAPIView
 
 
@@ -89,4 +92,5 @@ def student_data_view(request):
     """
     Returns aggregated student details for resume / profile view.
     """
-    return Response(generate_student_details(request.user))
+    user = prefetch_user_for_resume(User.objects.filter(id=request.user.id)).first()
+    return Response(generate_student_details(user))
