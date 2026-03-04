@@ -6,16 +6,6 @@ from .serializers import DepartmentListSerializer, DepartmentCreateSerializer
 from authentication.permissions import IsInstitutionAdmin
 
 
-class CreateDepartmentAPIView(CreateAPIView):
-    """
-    Creates a Department in specific institution
-    """
-
-    queryset = Department.objects.all()
-    serializer_class = DepartmentCreateSerializer
-    permission_classes = [IsAuthenticated, IsInstitutionAdmin]
-
-
 class DepartmentListCreateView(ListCreateAPIView):
     """
     Returns a list of all departments in the institution.
