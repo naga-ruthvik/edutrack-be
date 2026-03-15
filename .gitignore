@@ -18,6 +18,8 @@ student_credentials.csv
 venv/
 env/
 .venv/
+.venv2/
+venv2/
 /tmp
 
 # --- Django Specific Files ---
@@ -33,3 +35,6 @@ staticfiles/
 .vscode/
 # Environment variable files
 .env
+
+testsprite_tests/
+testsprite_tests/***
