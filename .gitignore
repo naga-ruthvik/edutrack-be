@@ -38,3 +38,6 @@ staticfiles/
 
 testsprite_tests/
 testsprite_tests/***
+
+.idea
+.ruff_cache
