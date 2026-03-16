@@ -1,0 +1,25 @@
+[tool.ruff]
+# Target version (e.g., Python 3.12)
+target-version = "py312"
+
+# 1. Rules to ENABLE
+# E/W = Errors/Warnings, F = Pyflakes, I = isort (import sorting)
+# DJ = Django specific rules, UP = Pyupgrade (suggests newer Python syntax)
+select = ["E", "F", "I", "DJ", "UP", "B"]
+
+# 2. Rules to IGNORE
+# For example, ignoring line length (E501) if you prefer PyCharm to handle it
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+# This keeps your Django imports organized correctly
+known-first-party = ["edutrack", "scholarhub"]
+section-order = ["future", "standard-library", "third-party", "django", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+"django" = ["django"]
+
+[tool.ruff.format]
+# Matches the "Black" style which is standard for modern Python
+quote-style = "double"
+indent-style = "space"
