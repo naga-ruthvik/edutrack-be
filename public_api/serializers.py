@@ -1,22 +1,27 @@
 from rest_framework import serializers
-from customers.models import Institution, Domain
 
-class RegisterCollegeSerializer(serializers.Serializer):
+from customers.models import Domain, Institution
+
+
+class InstitutionCreateSerializer(serializers.Serializer):
     """
     Serializer to validate input for creating a new College Tenant.
     """
+
     college_name = serializers.CharField(max_length=100)
-    slug = serializers.SlugField(max_length=50, help_text="Unique identifier (e.g. 'vardhaman')")
-    contact=serializers.CharField(max_length=15)
-    city=serializers.CharField(max_length=50)
-    state=serializers.CharField(max_length=50)
-    country=serializers.CharField(max_length=50)
-    pincode=serializers.CharField(max_length=10)
+    slug = serializers.SlugField(
+        max_length=50, help_text="Unique identifier (e.g. 'vardhaman')"
+    )
+    contact = serializers.CharField(max_length=15)
+    city = serializers.CharField(max_length=50)
+    state = serializers.CharField(max_length=50)
+    country = serializers.CharField(max_length=50)
+    pincode = serializers.CharField(max_length=10)
     admin_email = serializers.EmailField()
     password = serializers.CharField(
-        write_only=True, 
-        style={'input_type': 'password'}, # This makes it a password box in HTML
-        min_length=8
+        write_only=True,
+        style={"input_type": "password"},  # This makes it a password box in HTML
+        min_length=8,
     )
 
     def validate_slug(self, value):
@@ -24,19 +29,23 @@ class RegisterCollegeSerializer(serializers.Serializer):
         Check if this slug (schema_name) is already taken.
         """
         if Institution.objects.filter(schema_name=value).exists():
-            raise serializers.ValidationError("This college identifier (slug) is already registered.")
+            raise serializers.ValidationError(
+                "This college identifier (slug) is already registered."
+            )
         return value.lower()
 
-class InstitutionSerializer(serializers.ModelSerializer):
+
+class InstitutionListSerializer(serializers.ModelSerializer):
     """
     Serializer for Institution model.
     """
+
     domain = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Institution
-        fields = ['id', 'name', 'schema_name', 'domain']
-    
+        fields = ["id", "name", "schema_name", "domain"]
+
     def get_domain(self, obj):
         """
         Get the primary domain for this institution.

@@ -1,7 +1,6 @@
 from django.urls import path
-from .views import RegisterCollegeView, ListCollegesView
+from .views import InstitutionsGenericView
 
 urlpatterns = [
-    path('register-college/', RegisterCollegeView.as_view(), name='register_college'),
-    path('institutions/', ListCollegesView.as_view(), name='list_colleges'),
+    path("institution/", InstitutionsGenericView.as_view(), name="institution_views"),
 ]
