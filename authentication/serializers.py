@@ -1,10 +1,11 @@
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
 from rest_framework import serializers
-from .models import User
-from profiles.models import StudentProfile, FacultyProfile
 
-from profiles.serializers import StudentProfileSerializer, FacultyProfileSerializer
+from profiles.models import FacultyProfile, StudentProfile
+from profiles.serializers import FacultyProfileSerializer, StudentListSerializer
+
+from .models import User
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
@@ -40,7 +41,7 @@ class CurrentUserSerializer(BaseUserSerializer):
     def get_profile(self, obj):
         if obj.role == User.Role.STUDENT:
             try:
-                return StudentProfileSerializer(obj.student_profile).data
+                return StudentListSerializer(obj.student_profile).data
             except StudentProfile.DoesNotExist:
                 return None
         elif obj.role == User.Role.FACULTY:
