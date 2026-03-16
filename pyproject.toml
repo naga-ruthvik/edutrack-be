@@ -13,7 +13,7 @@ ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 # This keeps your Django imports organized correctly
-known-first-party = ["edutrack", "scholarhub"]
+known-first-party = ["edutrack"]
 section-order = ["future", "standard-library", "third-party", "django", "first-party", "local-folder"]
 
 [tool.ruff.lint.isort.sections]
