@@ -41,17 +41,15 @@ TENANT_APPS = (
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.admin",
-    "djoser",  # Auth Endpoints (Tenant specific)
+    "djoser",
     "rest_framework",
     "rest_framework.authtoken",
-    "drf_spectacular",  # API Documentation
+    "drf_spectacular",
     "authentication",
     "profiles",
     "academics",
     "achievements",
     "resume",
-    "lms",
-    "erp",
 )
 
 INSTALLED_APPS = list(SHARED_APPS) + [
@@ -63,26 +61,19 @@ TENANT_MODEL = "customers.Institution"
 TENANT_DOMAIN_MODEL = "customers.Domain"
 AUTH_USER_MODEL = "authentication.User"
 
-# Path-based tenancy - TenantSubfolderMiddleware only uses ROOT_URLCONF
-TENANT_SUBFOLDER_PREFIX = "api"
+# Subdomain-based tenancy
+# ROOT_URLCONF = tenant URLs (default for all tenants)
+# PUBLIC_SCHEMA_URLCONF = public override (middleware swaps to this for public tenant)
+ROOT_URLCONF = "edutrack.urls_tenant"
 PUBLIC_SCHEMA_URLCONF = "edutrack.urls_public"
-ROOT_URLCONF = (
-    "edutrack.urls_tenant"  # CRITICAL: Middleware wraps this for /api/{tenant}/
-)
-TENANT_URLCONF = "edutrack.urls_tenant"  # Not used by TenantSubfolderMiddleware
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
     "corsheaders.middleware.CorsMiddleware",
-
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
-    "edutrack.debug_middleware.DebugTenantSubfolderMiddleware",
-
+    "edutrack.debug_middleware.DebugTenantMiddleware",
     "orbit.middleware.OrbitMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -113,7 +104,7 @@ WSGI_APPLICATION = "edutrack.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django_tenants.postgresql_backend",
-        "NAME": "edutrack-dev",
+        "NAME": "edutrack",
         "USER": "postgres",
         "PASSWORD": "1234",
         "HOST": "localhost",
@@ -149,6 +140,12 @@ USE_TZ = True
 # --- STATIC & MEDIA FILES ---
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+ALLOWED_HOSTS = [
+    ".localhost",
+    "localhost",
+    "127.0.0.1",
+]
 
 # --- AWS S3 STORAGE ---
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -196,6 +193,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
     "http://localhost:3000",
 ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://\w+\.localhost:\d+$",  # Allow tenant subdomains in local dev
+]
 
 # --- DJOSER ---
 DJOSER = {
@@ -223,26 +223,10 @@ SPECTACULAR_SETTINGS = {"DISABLE_ERRORS_AND_WARNINGS": True}
 
 CELERY_BROKER_URL = "redis://localhost:6379/1"
 
-# --- LOGGING (for debugging) ---
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "handlers": {
-#         "console": {
-#             "class": "logging.StreamHandler",
-#         },
-#     },
-#     "loggers": {
-#         "edutrack.debug_middleware": {
-#             "handlers": ["console"],
-#             "level": "INFO",
-#         },
-#     },
-# }
-
 # settings.py
 ORBIT_CONFIG = {
-    "ENABLED": True,
+    "ENABLED": False
+    ,
     "SLOW_QUERY_THRESHOLD_MS": 500,
     "STORAGE_LIMIT": 1000,
     # Core watchers
@@ -266,10 +250,5 @@ ORBIT_CONFIG = {
     "RECORD_STORAGE": True,
     # Security
     # "AUTH_CHECK": lambda request: request.user.is_staff,
-    "IGNORE_PATHS": [
-    r'.*/orbit/.*',
-    r'^/static/.*',
-    r'^/media/.*'
-]
-
+    "IGNORE_PATHS": [r".*/orbit/.*", r"^/static/.*", r"^/media/.*"],
 }

@@ -5,8 +5,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from djoser.views import UserViewSet
 
 urlpatterns = [
-    # --- 0. PUBLIC & ADMIN (Shared) ---
-    path("public/", include("public_api.urls")),
+    # --- 0. ADMIN ---
     path("admin/", admin.site.urls),
     # --- 1. TENANT ROOT (Swagger UI) ---
     path(
@@ -29,11 +28,9 @@ urlpatterns = [
         "swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"
     ),
     # --- 4. TENANT APPS ---
-    path("users/", include("authentication.urls")),
     path("administration/", include("academics.urls")),
     path("achievements/", include("achievements.urls")),
     path("resume/", include("resume.urls")),
     path("profiles/", include("profiles.urls")),
-    path("erp/", include("erp.urls")),
     path("orbit/", include("orbit.urls")),
 ]
