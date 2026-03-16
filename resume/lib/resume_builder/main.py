@@ -1,13 +1,15 @@
 import json
-import google.generativeai as genai
+import google as genai
 import os
 import traceback
-
+import requests
+from typing import Dict, Any
 # ======================================================
 # 1. SAFE JSON PARSER
 # ======================================================
 
-RESUME_GEMINI_API_KEY=os.getenv("RESUME_GEMINI_API_KEY")
+RESUME_GEMINI_API_KEY = os.getenv("RESUME_GEMINI_API_KEY")
+
 
 def safe_parse_json(raw_json: str) -> dict:
     if not raw_json:
@@ -18,7 +20,7 @@ def safe_parse_json(raw_json: str) -> dict:
         last = raw_json.rfind("}")
         if last != -1:
             try:
-                return json5.loads(raw_json[:last+1])
+                return json.loads(raw_json[: last + 1])
             except Exception:
                 pass
     # fallback: try to locate first "{" ... "}" slice
@@ -26,28 +28,31 @@ def safe_parse_json(raw_json: str) -> dict:
         start = raw_json.find("{")
         end = raw_json.rfind("}")
         if start != -1 and end != -1 and end > start:
-            return json5.loads(raw_json[start:end+1])
+            return json.loads(raw_json[start : end + 1])
     except Exception:
         pass
     return {}
+
 
 # ======================================================
 # 2. GEMINI CALL FUNCTION (defensive)
 # ======================================================
 def call_llm_extract(prompt: str) -> dict:
     try:
-        genai.configure(api_key=RESUME_GEMINI_API_KEY)  # <-- replace with your Gemini API key
+        genai.configure(
+            api_key=RESUME_GEMINI_API_KEY
+        )  # <-- replace with your Gemini API key
 
         model = genai.GenerativeModel(
             model_name="gemini-2.5-flash-lite",
-            system_instruction="Return only valid JSON. No explanations."
+            system_instruction="Return only valid JSON. No explanations.",
         )
 
         generation_config = {
             "response_mime_type": "application/json",
             "temperature": 0,
             "max_output_tokens": 2000,
-            "candidate_count": 1
+            "candidate_count": 1,
         }
 
         response = model.generate_content(prompt, generation_config=generation_config)
@@ -63,7 +68,10 @@ def call_llm_extract(prompt: str) -> dict:
 
         parsed = safe_parse_json(raw_text)
         if not isinstance(parsed, dict):
-            print("[WARN] LLM returned JSON that is not an object; parsed type:", type(parsed))
+            print(
+                "[WARN] LLM returned JSON that is not an object; parsed type:",
+                type(parsed),
+            )
             # wrap into a dict if it's a list or something else
             return {"_raw_parsed": parsed}
         return parsed
@@ -71,6 +79,7 @@ def call_llm_extract(prompt: str) -> dict:
         print("[ERROR] call_llm_extract failed:", e)
         traceback.print_exc()
         return {}
+
 
 # ======================================================
 # 3. BUILD PROMPT
@@ -165,6 +174,7 @@ def ensure_list(v):
         return v
     return [v]
 
+
 def safe_get_list_of_dicts(value):
     """
     Accept many shapes: list of dicts, dict, list of strings, string.
@@ -185,6 +195,7 @@ def safe_get_list_of_dicts(value):
         return [value]
     # fallback: single string
     return [{"value": value}]
+
 
 # ======================================================
 # 4. CONVERSION TO TARGET FORMAT (comprehensive)
@@ -209,7 +220,7 @@ def convert_to_target_format(raw: dict) -> dict:
             "projects": [],
             "skills": [],
             "languages": [],
-            "certifications": []
+            "certifications": [],
         }
 
     def read_str(*keys):
@@ -234,7 +245,9 @@ def convert_to_target_format(raw: dict) -> dict:
     output = {
         "name": read_str("name", "fullName", "fullname"),
         "position": read_str("position", "role", "job_title", "title"),
-        "contactInformation": read_str("contactInformation", "contact", "phone", "phoneNumber"),
+        "contactInformation": read_str(
+            "contactInformation", "contact", "phone", "phoneNumber"
+        ),
         "email": read_str("email", "Email", "emailAddress"),
         "address": read_str("address", "location", "addr"),
         "profilePicture": read_str("profilePicture", "photo", "avatar"),
@@ -245,19 +258,28 @@ def convert_to_target_format(raw: dict) -> dict:
         "projects": [],
         "skills": [],
         "languages": read_list("languages", "language"),
-        "certifications": []
+        "certifications": [],
     }
 
     # ---- Social Media ----
-    raw_sm = raw.get("socialMedia") or raw.get("socialMedias") or raw.get("socials") or []
+    raw_sm = (
+        raw.get("socialMedia") or raw.get("socialMedias") or raw.get("socials") or []
+    )
     for item in ensure_list(raw_sm):
         if isinstance(item, dict):
-            name = item.get("platform") or item.get("socialMedia") or item.get("name") or ""
+            name = (
+                item.get("platform")
+                or item.get("socialMedia")
+                or item.get("name")
+                or ""
+            )
             link = item.get("url") or item.get("link") or item.get("value") or ""
             output["socialMedia"].append({"socialMedia": name, "link": link})
         elif isinstance(item, str) and ":" in item:
             name, link = item.split(":", 1)
-            output["socialMedia"].append({"socialMedia": name.strip(), "link": link.strip()})
+            output["socialMedia"].append(
+                {"socialMedia": name.strip(), "link": link.strip()}
+            )
         else:
             output["socialMedia"].append({"socialMedia": str(item), "link": ""})
 
@@ -265,7 +287,13 @@ def convert_to_target_format(raw: dict) -> dict:
     raw_edu = raw.get("education") or raw.get("educations") or []
     for edu in ensure_list(raw_edu):
         if isinstance(edu, dict):
-            school = edu.get("school") or edu.get("degree") or edu.get("institution") or edu.get("college") or ""
+            school = (
+                edu.get("school")
+                or edu.get("degree")
+                or edu.get("institution")
+                or edu.get("college")
+                or ""
+            )
             degree = edu.get("degree") or edu.get("major") or edu.get("program") or ""
             duration = edu.get("duration") or edu.get("years") or ""
             startYear = endYear = ""
@@ -274,25 +302,46 @@ def convert_to_target_format(raw: dict) -> dict:
             else:
                 startYear = str(edu.get("startYear") or edu.get("from") or "")
                 endYear = str(edu.get("endYear") or edu.get("to") or "")
-            output["education"].append({
-                "school": school,
-                "degree": degree,
-                "startYear": startYear,
-                "endYear": endYear
-            })
+            output["education"].append(
+                {
+                    "school": school,
+                    "degree": degree,
+                    "startYear": startYear,
+                    "endYear": endYear,
+                }
+            )
         else:
-            output["education"].append({"school": str(edu), "degree": "", "startYear": "", "endYear": ""})
+            output["education"].append(
+                {"school": str(edu), "degree": "", "startYear": "", "endYear": ""}
+            )
 
     # ---- Work Experience ----
-    raw_work = raw.get("workExperience") or raw.get("experience") or raw.get("work_experience") or []
+    raw_work = (
+        raw.get("workExperience")
+        or raw.get("experience")
+        or raw.get("work_experience")
+        or []
+    )
     for w in ensure_list(raw_work):
         if isinstance(w, dict):
-            company = w.get("company") or w.get("employer") or w.get("organization") or ""
+            company = (
+                w.get("company") or w.get("employer") or w.get("organization") or ""
+            )
             position = w.get("position") or w.get("role") or w.get("title") or ""
-            description = w.get("description") or w.get("location") or w.get("summary") or ""
-            resp = w.get("responsibilities") or w.get("achievements") or w.get("keyAchievements") or w.get("tasks") or []
+            description = (
+                w.get("description") or w.get("location") or w.get("summary") or ""
+            )
+            resp = (
+                w.get("responsibilities")
+                or w.get("achievements")
+                or w.get("keyAchievements")
+                or w.get("tasks")
+                or []
+            )
             if isinstance(resp, str):
-                resp_list = [r.strip() for r in resp.replace(";", "\n").split("\n") if r.strip()]
+                resp_list = [
+                    r.strip() for r in resp.replace(";", "\n").split("\n") if r.strip()
+                ]
             else:
                 resp_list = ensure_list(resp)
             duration = w.get("duration") or w.get("period") or ""
@@ -302,46 +351,65 @@ def convert_to_target_format(raw: dict) -> dict:
             else:
                 startYear = str(w.get("startYear") or w.get("from") or "")
                 endYear = str(w.get("endYear") or w.get("to") or "")
-            output["workExperience"].append({
-                "company": company,
-                "position": position,
-                "description": description,
-                "keyAchievements": "\n".join(resp_list),
-                "startYear": startYear,
-                "endYear": endYear
-            })
+            output["workExperience"].append(
+                {
+                    "company": company,
+                    "position": position,
+                    "description": description,
+                    "keyAchievements": "\n".join(resp_list),
+                    "startYear": startYear,
+                    "endYear": endYear,
+                }
+            )
         else:
             s = str(w)
-            output["workExperience"].append({
-                "company": s, "position": "", "description": "", "keyAchievements": "", "startYear": "", "endYear": ""
-            })
+            output["workExperience"].append(
+                {
+                    "company": s,
+                    "position": "",
+                    "description": "",
+                    "keyAchievements": "",
+                    "startYear": "",
+                    "endYear": "",
+                }
+            )
 
     # ---- Projects (FIXED INDENTATION + CORRECT FORMAT) ----
     raw_projects = raw.get("projects") or []
     for p in ensure_list(raw_projects):
         if isinstance(p, dict):
-            ka = p.get("keyAchievements") or p.get("achievements") or p.get("Key Achievements") or ""
+            ka = (
+                p.get("keyAchievements")
+                or p.get("achievements")
+                or p.get("Key Achievements")
+                or ""
+            )
             if isinstance(ka, list):
                 ka = "\n".join([str(k).strip() for k in ka if k])
-            output["projects"].append({
-                "name": p.get("name") or p.get("title") or p.get("Project Name") or "",
-                "link": p.get("link") or p.get("url") or "",
-                "description": p.get("description") or "",
-                "keyAchievements": ka,
-                "startYear": p.get("startYear") or p.get("start") or "",
-                "endYear": p.get("endYear") or p.get("end") or ""
-            })
+            output["projects"].append(
+                {
+                    "name": p.get("name")
+                    or p.get("title")
+                    or p.get("Project Name")
+                    or "",
+                    "link": p.get("link") or p.get("url") or "",
+                    "description": p.get("description") or "",
+                    "keyAchievements": ka,
+                    "startYear": p.get("startYear") or p.get("start") or "",
+                    "endYear": p.get("endYear") or p.get("end") or "",
+                }
+            )
         else:
-            output["projects"].append({
-                "name": str(p),
-                "link": "",
-                "description": "",
-                "keyAchievements": "",
-                "startYear": "",
-                "endYear": ""
-            })
-    
-    
+            output["projects"].append(
+                {
+                    "name": str(p),
+                    "link": "",
+                    "description": "",
+                    "keyAchievements": "",
+                    "startYear": "",
+                    "endYear": "",
+                }
+            )
 
     # ---- Skills (ATS-ready, flat strings) ----
     output["skills"] = []
@@ -355,7 +423,7 @@ def convert_to_target_format(raw: dict) -> dict:
                 if isinstance(s, str) and s.strip():
                     skills_list.append(s.strip())
                 elif isinstance(s, dict):
-                # Flatten objects like {"name": "Python"} or {"skillName": "React"} to strings
+                    # Flatten objects like {"name": "Python"} or {"skillName": "React"} to strings
                     for key in ["name", "skillName", "skill"]:
                         if key in s and isinstance(s[key], str) and s[key].strip():
                             skills_list.append(s[key].strip())
@@ -368,11 +436,10 @@ def convert_to_target_format(raw: dict) -> dict:
                 output["skills"].append({"title": "Skills", "skills": skills_list})
 
         elif isinstance(group, str) and group.strip():
-        # Single string → default to Technical Skills
-            output["skills"].append({
-                "title": "Technical Skills",
-                "skills": [group.strip()]
-            })
+            # Single string → default to Technical Skills
+            output["skills"].append(
+                {"title": "Technical Skills", "skills": [group.strip()]}
+            )
 
     # ---- Languages (flat array of strings for ATS) ----
     # ---- Languages (flat array of strings for ATS input box) ----
@@ -387,9 +454,6 @@ def convert_to_target_format(raw: dict) -> dict:
                 flat_langs.append(val.strip())
         output["languages"] = flat_langs
 
-
-
-
     # ---- Certifications ----
     raw_certs = raw.get("certifications") or raw.get("certs") or []
     for c in ensure_list(raw_certs):
@@ -399,11 +463,18 @@ def convert_to_target_format(raw: dict) -> dict:
             output["certifications"].append(str(c))
 
     # ---- Ensure all arrays are lists ----
-    for key in ["socialMedia", "education", "workExperience", "projects", "skills", "languages", "certifications"]:
+    for key in [
+        "socialMedia",
+        "education",
+        "workExperience",
+        "projects",
+        "skills",
+        "languages",
+        "certifications",
+    ]:
         output[key] = ensure_list(output.get(key))
 
     return output
-
 
 
 # ======================================================
@@ -411,7 +482,9 @@ def convert_to_target_format(raw: dict) -> dict:
 # ======================================================
 def create_resume_from_string(resume_text: str, job_description: str = "") -> str:
     try:
-        raw_result = call_llm_extract_local(build_extraction_prompt(resume_text, job_description))
+        raw_result = call_llm_extract_local(
+            build_extraction_prompt(resume_text, job_description)
+        )
         if not raw_result:
             print("[WARN] LLM returned empty result; proceeding with defaults.")
         final_result = convert_to_target_format(raw_result or {})
@@ -434,9 +507,10 @@ def create_resume_from_string(resume_text: str, job_description: str = "") -> st
             "projects": [],
             "skills": [],
             "languages": [],
-            "certifications": []
+            "certifications": [],
         }
         return json.dumps(empty, separators=(",", ":"))
+
 
 # ======================================================
 # 6. MAIN — PROCESS MULTIPLE RESUMES
@@ -549,10 +623,6 @@ def create_resume_from_string(resume_text: str, job_description: str = "") -> st
 #         print(f"[INFO] Saved minified JSON for resume {idx}: {filename}")
 #         print(minified_json)  # one-line JSON
 
-import json
-import traceback
-import requests
-from typing import Dict, Any
 
 def safe_parse_json(text: str) -> Dict[str, Any]:
     """
@@ -570,11 +640,12 @@ def safe_parse_json(text: str) -> Dict[str, Any]:
         # If strict parsing fails, return raw text or empty dict based on preference
         return {"_raw_text": text}
 
+
 def call_llm_extract_local(prompt: str) -> dict:
     # ---------------------------------------------------------
     # CONFIGURATION: Update this URL when you restart Ngrok
     # ---------------------------------------------------------
-    NGROK_BASE_URL = "http://localhost:11434/" 
+    NGROK_BASE_URL = "http://localhost:11434/"
     MODEL_NAME = "gpt-oss:20b"
     # ---------------------------------------------------------
 
@@ -590,19 +661,16 @@ def call_llm_extract_local(prompt: str) -> dict:
             "messages": [
                 {
                     "role": "system",
-                    "content": "Return only valid JSON. No explanations."
+                    "content": "Return only valid JSON. No explanations.",
                 },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
+                {"role": "user", "content": prompt},
             ],
             "stream": False,  # Get full response at once
-            "format": "json", # Enforce JSON mode (Ollama feature)
+            "format": "json",  # Enforce JSON mode (Ollama feature)
             "options": {
-                "temperature": 0, # Deterministic (0 is best for extraction)
-                "num_ctx": 4096   # Context window size
-            }
+                "temperature": 0,  # Deterministic (0 is best for extraction)
+                "num_ctx": 4096,  # Context window size
+            },
         }
 
         # 3. Prepare Headers
@@ -610,13 +678,13 @@ def call_llm_extract_local(prompt: str) -> dict:
         # otherwise requests returns an HTML warning page instead of JSON.
         headers = {
             "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true" 
+            "ngrok-skip-browser-warning": "true",
         }
 
         # 4. Execute Request
         # We use a timeout to prevent hanging if the local LLM is stuck
         response = requests.post(api_url, json=payload, headers=headers, timeout=120)
-        
+
         # Check for HTTP errors (404, 500, etc)
         if response.status_code != 200:
             print(f"[ERROR] HTTP {response.status_code}: {response.text}")
@@ -624,16 +692,19 @@ def call_llm_extract_local(prompt: str) -> dict:
 
         # 5. Parse Response
         result_json = response.json()
-        
+
         # Ollama returns content nested in 'message' -> 'content'
         content_text = result_json.get("message", {}).get("content", "")
 
         parsed = safe_parse_json(content_text)
-        
+
         if not isinstance(parsed, dict):
-            print("[WARN] LLM returned JSON that is not an object; parsed type:", type(parsed))
+            print(
+                "[WARN] LLM returned JSON that is not an object; parsed type:",
+                type(parsed),
+            )
             return {"_raw_parsed": parsed}
-            
+
         return parsed
 
     except requests.exceptions.ConnectionError:
