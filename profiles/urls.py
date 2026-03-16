@@ -23,7 +23,7 @@ urlpatterns = [
         "faculty/mentees/", FacultyMenteeListView.as_view(), name="faculty_mentee_list"
     ),
     # HODs
-    path("hods/", HODListCreateView.as_view(), name="hod_list"),
+    path("hods/", HODListCreateView.as_view(), name="hod_list_create"),
     # Bulk Upload
     path("bulk-upload/", BulkProfileUploadView.as_view(), name="profile_bulk_upload"),
 ]
