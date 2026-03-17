@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from authentication.models import User
-from profiles.models import StudentProfile, FacultyProfile, Education
+
 from academics.models import Department
+from authentication.models import User
+from profiles.models import Education, FacultyProfile, StudentProfile
 
 
 # USER SERIALIZERS
@@ -39,7 +40,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = [
             "email",
             "password",
-            "username",
         ]
 
 
