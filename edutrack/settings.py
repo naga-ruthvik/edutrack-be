@@ -2,9 +2,10 @@
 Django settings for edutrack project.
 """
 
-from pathlib import Path
 import os
 from datetime import timedelta
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -62,8 +63,6 @@ TENANT_DOMAIN_MODEL = "customers.Domain"
 AUTH_USER_MODEL = "authentication.User"
 
 # Subdomain-based tenancy
-# ROOT_URLCONF = tenant URLs (default for all tenants)
-# PUBLIC_SCHEMA_URLCONF = public override (middleware swaps to this for public tenant)
 ROOT_URLCONF = "edutrack.urls_tenant"
 PUBLIC_SCHEMA_URLCONF = "edutrack.urls_public"
 
@@ -72,7 +71,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "edutrack.debug_middleware.DebugTenantMiddleware",
+    "django_tenants.middleware.main.TenantMainMiddleware",
     "orbit.middleware.OrbitMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -225,8 +224,7 @@ CELERY_BROKER_URL = "redis://localhost:6379/1"
 
 # settings.py
 ORBIT_CONFIG = {
-    "ENABLED": False
-    ,
+    "ENABLED": False,
     "SLOW_QUERY_THRESHOLD_MS": 500,
     "STORAGE_LIMIT": 1000,
     # Core watchers
