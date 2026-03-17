@@ -1,26 +1,27 @@
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import (
-    ListAPIView,
     CreateAPIView,
     GenericAPIView,
+    ListAPIView,
+    ListCreateAPIView,
     RetrieveAPIView,
 )
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework import status
+from rest_framework.response import Response
 
 # Models
 from authentication.models import User
-from profiles.models import StudentProfile
 
 # Permissions
-from authentication.permissions import IsInstitutionAdmin, IsStudentOrFaculty, IsStudent
+from authentication.permissions import IsInstitutionAdmin, IsStudent, IsStudentOrFaculty
+from profiles.models import StudentProfile
 
 # Serializers
 from profiles.serializers import (
-    StudentListSerializer,
-    StudentDetailSerializer,
     StudentCreateSerializer,
+    StudentDetailSerializer,
+    StudentListSerializer,
 )
 
 # Services
@@ -28,7 +29,6 @@ from resume.services.get_student_details import (
     generate_student_details,
     prefetch_user_for_resume,
 )
-from rest_framework.generics import ListCreateAPIView
 
 
 class StudentListCreateView(GenericAPIView):
@@ -38,6 +38,11 @@ class StudentListCreateView(GenericAPIView):
         if self.request.method in ["POST"]:
             return StudentCreateSerializer
         return StudentListSerializer
+
+    def get_permission_classes(self):
+        if self.request.method in ["POST"]:
+            return [IsInstitutionAdmin]
+        return [IsAuthenticated]
 
     def get(self, request):
         students = self.get_queryset()
