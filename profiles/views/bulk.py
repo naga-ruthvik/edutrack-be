@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 import string
+from datetime import date 
 from io import BytesIO
 from django.db import transaction
 from django.http import HttpResponse
@@ -95,6 +96,9 @@ class BulkProfileUploadView(GenericAPIView):
                     if role == User.Role.STUDENT:
                         username = str(roll_number)
                         password = self.generate_random_password()
+                        # print(f"Row {index}: email={email}, roll={roll_number}, dept={dept_name} ,username={username}, password={password}")
+                        
+
 
                     elif role == User.Role.FACULTY:
                         employee_id = row.get("Employee ID", f"TEMP-{index}")
@@ -130,7 +134,7 @@ class BulkProfileUploadView(GenericAPIView):
                             user=user,
                             roll_number=roll_number,
                             department=department,
-                            batch_year=2024,
+                            batch_year=date(2024, 1, 1),
                             current_semester=1,
                         )
                         credentials_data.append(
@@ -172,6 +176,9 @@ class BulkProfileUploadView(GenericAPIView):
                     created_count += 1
 
                 except Exception as e:
+                    print(f"EXCEPTION: {str(e)}")  # ← see exact error
+                    print(f"Row data: email={email}, roll={roll_number}, dept={dept_name}")
+
                     error_msg = f"Row {index + 2}: {str(e)}"
                     error_rows.append(error_msg)
 
